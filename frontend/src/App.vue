@@ -657,7 +657,7 @@
             <div v-if="responseInputMode === 'xml'" class="response-import">
               <label class="wide-field">
                 <span>导入 XML</span>
-                <textarea class="xml-import-textarea" v-model="responseXmlImport" placeholder="<isomsg>...</isomsg>"></textarea>
+                <CodeEditor class="xml-import-textarea" language="xml" v-model="responseXmlImport" placeholder="<isomsg>...</isomsg>" />
               </label>
               <div class="form-line">
                 <button type="button" class="secondary" @click="importResponseXml">
@@ -844,7 +844,7 @@
           <div class="validation-panels">
             <label class="validation-pane">
               <span>请求报文 XML</span>
-              <textarea v-model="testXml" spellcheck="false"></textarea>
+              <CodeEditor language="xml" v-model="testXml" />
             </label>
             <div class="validation-pane">
               <div class="validation-pane-title">
@@ -892,7 +892,7 @@
               </div>
               <label>
                 <span>补齐 MAC 后的 XML</span>
-                <textarea class="xml-preview-textarea" v-model="wirePreview.requestXml" spellcheck="false"></textarea>
+                <CodeEditor class="xml-preview-textarea" language="xml" v-model="wirePreview.requestXml" />
               </label>
             </div>
             <div v-else class="empty-inline">序列化后展示完整 Frame HEX、Payload HEX 和发送提示。</div>
@@ -915,7 +915,7 @@
             </label>
             <label>
               <span>解析结果 XML</span>
-              <textarea class="xml-preview-textarea" :value="parsedResponseXml || '解析后显示 XML。'" readonly spellcheck="false"></textarea>
+              <CodeEditor class="xml-preview-textarea" language="xml" :model-value="parsedResponseXml" placeholder="解析后显示 XML。" readonly />
             </label>
           </div>
         </section>
@@ -1118,7 +1118,7 @@
 
               <div v-show="!collapsedDebugPanels.request" class="debug-panel-body">
                 <label v-if="debugMessageView === 'xml'" class="debug-xml-pane">
-                  <textarea v-model="debugRequest.requestXml" spellcheck="false" placeholder="<isomsg>...</isomsg>"></textarea>
+                  <CodeEditor language="xml" v-model="debugRequest.requestXml" placeholder="<isomsg>...</isomsg>" />
                 </label>
                 <CodeBlock
                   v-else
@@ -2538,6 +2538,7 @@ import {
 } from 'lucide-vue-next';
 import { api } from './api/client';
 import CodeBlock from './components/CodeBlock.vue';
+import CodeEditor from './components/CodeEditor.vue';
 
 const capabilityOptions = [
   { value: 'DEBIT', label: '扣款', requestMti: '0200', processCode: '000000', responseMti: '0210' },

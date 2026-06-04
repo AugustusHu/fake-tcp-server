@@ -2343,7 +2343,8 @@ label {
 }
 
 .validation-pane textarea,
-.validation-pane pre {
+.validation-pane pre,
+.validation-pane .code-editor {
   min-height: 430px;
 }
 
@@ -2639,7 +2640,8 @@ label {
 }
 
 .debug-xml-pane textarea,
-.debug-xml-pane pre {
+.debug-xml-pane pre,
+.debug-xml-pane .code-editor {
   min-height: 520px;
 }
 
@@ -4025,8 +4027,10 @@ textarea,
 pre,
 .validation-pane textarea,
 .validation-pane pre,
+.validation-pane .code-editor,
 .debug-xml-pane textarea,
 .debug-xml-pane pre,
+.debug-xml-pane .code-editor,
 .debug-report-pane pre,
 .debug-step-detail textarea,
 .hex-textarea,
@@ -4053,12 +4057,14 @@ pre {
 }
 
 .validation-pane textarea,
-.validation-pane pre {
+.validation-pane pre,
+.validation-pane .code-editor {
   min-height: 360px;
 }
 
 .debug-xml-pane textarea,
-.debug-xml-pane pre {
+.debug-xml-pane pre,
+.debug-xml-pane .code-editor {
   min-height: 420px;
 }
 
@@ -6644,6 +6650,7 @@ p,
 }
 
 .debug-request-panel .debug-xml-pane textarea,
+.debug-request-panel .debug-xml-pane .code-editor,
 .debug-request-panel .code-block,
 .debug-response-panel .code-block {
   min-height: 240px;
@@ -6734,6 +6741,7 @@ p,
 }
 
 .debug-pos-page .debug-request-panel .debug-xml-pane textarea,
+.debug-pos-page .debug-request-panel .debug-xml-pane .code-editor,
 .debug-pos-page .debug-request-panel .code-block,
 .debug-pos-page .debug-response-panel .code-block {
   line-height: 1.45;
