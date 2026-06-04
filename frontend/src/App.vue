@@ -2,7 +2,7 @@
   <section v-if="!authReady" class="login-screen">
     <div class="login-card">
       <div class="login-brand">
-        <Server :size="28" />
+        <img class="faker-logo-mark" :src="brandLogoUrl" alt="" />
         <div>
           <strong>Faker</strong>
           <span>ISO8583 Mock Console</span>
@@ -15,7 +15,7 @@
   <section v-else-if="!currentUser" class="login-screen">
     <form class="login-card" @submit.prevent="login">
       <div class="login-brand">
-        <Server :size="28" />
+        <img class="faker-logo-mark" :src="brandLogoUrl" alt="" />
         <div>
           <strong>Faker</strong>
           <span>ISO8583 Mock Console</span>
@@ -44,7 +44,7 @@
   <div v-else class="app-shell">
     <header class="app-primary-header">
       <div class="brand app-brand">
-        <Server :size="18" />
+        <img class="faker-logo-mark compact" :src="brandLogoUrl" alt="" />
         <div>
           <strong>Faker</strong>
           <span>ISO8583 Workbench</span>
@@ -2862,6 +2862,8 @@ const activeMcpTokens = computed(() => mcpTokens.value.filter((token) => !token.
 const activeTokenCount = computed(() => activeMcpTokens.value.length);
 const tokenLimitReached = computed(() => activeTokenCount.value >= 3);
 const appBasePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+const publicAsset = (path) => `${appBasePath || ''}/${path.replace(/^\//, '')}`;
+const brandLogoUrl = publicAsset('favicon.svg?v=2');
 const mcpEndpointUrl = computed(() => `${window.location.origin}${appBasePath}/mcp`);
 const backendMcpEndpointUrl = computed(() => `${window.location.protocol}//${window.location.hostname}:18080/mcp`);
 const isChannelCodeDuplicate = computed(() => {

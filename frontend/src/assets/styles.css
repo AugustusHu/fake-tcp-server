@@ -195,8 +195,16 @@ pre {
   gap: 12px;
 }
 
-.login-brand svg {
-  color: #27745d;
+.faker-logo-mark {
+  display: block;
+  flex: 0 0 auto;
+  height: 32px;
+  width: 32px;
+}
+
+.faker-logo-mark.compact {
+  height: 24px;
+  width: 24px;
 }
 
 .login-brand strong,
