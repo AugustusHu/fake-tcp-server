@@ -57,10 +57,15 @@ function restore(source, placeholders) {
 
 function highlightXml(source) {
   const protectedStrings = withProtectedStrings(source, /&quot;[^&]*(?:&(?!quot;)[^&]*)*&quot;/g, 'code-string');
-  let output = protectedStrings.protectedSource
-    .replace(/(&lt;\/?)([A-Za-z_][\w:.-]*)/g, '$1<span class="code-tag">$2</span>')
-    .replace(/\s([A-Za-z_:][\w:.-]*)(=)/g, ' <span class="code-attr">$1</span>$2')
-    .replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="code-comment">$1</span>');
+  const protectedComments = withProtectedStrings(protectedStrings.protectedSource, /&lt;!--[\s\S]*?--&gt;/g, 'code-comment');
+  let output = protectedComments.protectedSource.replace(
+    /(&lt;\/?)([A-Za-z_][\w:.-]*)([\s\S]*?)(\/?&gt;)/g,
+    (match, open, tagName, attributes, close) => {
+      const highlightedAttributes = attributes.replace(/\s([A-Za-z_:][\w:.-]*)(=)/g, ' <span class="code-attr">$1</span>$2');
+      return `${open}<span class="code-tag">${tagName}</span>${highlightedAttributes}${close}`;
+    }
+  );
+  output = restore(output, protectedComments.placeholders);
   return restore(output, protectedStrings.placeholders);
 }
 
