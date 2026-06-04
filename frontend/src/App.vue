@@ -38,7 +38,6 @@
         <KeyRound :size="16" />
         {{ loginLoading ? '登录中...' : '登录' }}
       </button>
-      <p class="login-hint">默认用户 admin，默认密码 123456。</p>
     </form>
   </section>
 
