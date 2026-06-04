@@ -440,138 +440,81 @@
             </div>
           </div>
 
-          <div class="data-scope-callout user">
-            <strong>用户数据</strong>
-            <span>保存时会记录当前用户；公开规则会进入全局共享库，复制公开规则会生成自己的规则副本。</span>
-          </div>
-
           <div class="form-nav">
             <button type="button" :class="{ active: ruleSection === 'match' }" @click="ruleSection = 'match'">匹配</button>
             <button type="button" :class="{ active: ruleSection === 'behavior' }" @click="ruleSection = 'behavior'">动作与响应</button>
           </div>
 
           <div v-if="ruleSection === 'match'" class="form-section">
-            <div class="section-title">
-              <h2>匹配定义</h2>
-              <span class="tooltip-trigger" tabindex="0" data-tooltip="名称、优先级和条件关系一起决定请求会命中哪条规则。">?</span>
+            <div class="rule-meta-strip">
+              <label class="rule-name-field">
+                <span>规则名称</span>
+                <input v-model="editingRule.name" required />
+              </label>
+              <label class="rule-priority-field">
+                <span>优先级</span>
+                <input type="number" v-model.number="editingRule.priority" />
+              </label>
+              <label class="switch-field compact-switch">
+                <input type="checkbox" v-model="editingRule.enabled" />
+                <span>启用</span>
+              </label>
             </div>
-            <div class="form-card-grid">
-              <div class="form-card span-2">
-                <div class="form-card-header">
-                  <strong>能力归属</strong>
-                  <span>选择能力会生成默认前提；请求 MTI、DE3 和响应 MTI 可继续手动调整。</span>
-                </div>
-                <div class="capability-select-layout">
-                  <label class="capability-select-field">
-                    <span>规则能力</span>
-                    <select :value="editingRule.capability" @change="setRuleCapability($event.target.value)">
-                      <option v-for="capability in capabilityOptions" :key="capability.value" :value="capability.value">
-                        {{ capability.label }}
-                      </option>
-                    </select>
-                  </label>
-                  <div class="capability-select-preview" aria-label="当前能力默认前提预览">
-                    <span>
-                      请求 MTI
-                      <strong>{{ capabilityByValue(editingRule.capability).requestMti }}</strong>
-                    </span>
-                    <span>
-                      DE3
-                      <strong>{{ capabilityByValue(editingRule.capability).processCode }}</strong>
-                    </span>
-                    <span>
-                      响应 MTI
-                      <strong>{{ capabilityByValue(editingRule.capability).responseMti }}</strong>
-                    </span>
-                  </div>
-                </div>
-              </div>
 
-              <div class="form-card span-2">
-                <div class="form-card-header">
-                  <strong>能力前提</strong>
-                  <span>系统条件始终作为前提条件参与匹配，固定为 AND 关系；字段不可删除，但取值可以按渠道差异修改。</span>
-                </div>
-                <div class="field-grid compact-grid">
-                  <label>
-                    <span>请求 MTI</span>
-                    <input
-                      :value="systemConditionInputValue('0')"
-                      maxlength="4"
-                      placeholder="例如 0200"
-                      @input="setSystemConditionValue('0', $event.target.value)"
-                    />
-                  </label>
-                  <label>
-                    <span>DE3 Process Code</span>
-                    <input
-                      :value="systemConditionInputValue('3')"
-                      maxlength="6"
-                      placeholder="例如 000000"
-                      @input="setSystemConditionValue('3', $event.target.value)"
-                    />
-                  </label>
-                  <label>
-                    <span>响应 MTI</span>
-                    <input v-model="editingRule.response.mti" maxlength="4" placeholder="例如 0210" />
-                  </label>
-                </div>
+            <div class="rule-work-panel trigger-panel">
+              <div class="rule-panel-title">
+                <strong>交易匹配</strong>
+                <span>能力前提始终 AND，字段值允许按渠道调整。</span>
               </div>
-
-              <div class="form-card span-2">
-                <div class="form-card-header">
-                  <strong>规则身份</strong>
-                  <span>用于排序、识别和启停</span>
-                </div>
-                <div class="field-grid compact-grid">
-                  <label>
-                    <span>名称</span>
-                    <input v-model="editingRule.name" required />
-                  </label>
-                  <label>
-                    <span>优先级</span>
-                    <input type="number" v-model.number="editingRule.priority" />
-                  </label>
-                  <label class="switch-field">
-                    <input type="checkbox" v-model="editingRule.enabled" />
-                    <span>启用</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="form-card">
-                <div class="form-card-header">
-                  <strong>条件关系</strong>
-                  <span>多条条件如何组合</span>
-                </div>
-                <div class="choice-group">
-                  <button type="button" :class="{ active: editingRule.matchMode === 'ALL' }" @click="editingRule.matchMode = 'ALL'">
-                    <strong>全部匹配</strong>
-                    <small>ALL</small>
-                  </button>
-                  <button type="button" :class="{ active: editingRule.matchMode === 'ANY' }" @click="editingRule.matchMode = 'ANY'">
-                    <strong>任一匹配</strong>
-                    <small>ANY</small>
-                  </button>
-                </div>
+              <div class="trigger-grid">
+                <label>
+                  <span>交易类型</span>
+                  <select :value="editingRule.capability" @change="setRuleCapability($event.target.value)">
+                    <option v-for="capability in capabilityOptions" :key="capability.value" :value="capability.value">
+                      {{ capability.label }}
+                    </option>
+                  </select>
+                </label>
+                <label>
+                  <span>请求 MTI</span>
+                  <input
+                    :value="systemConditionInputValue('0')"
+                    maxlength="4"
+                    placeholder="例如 0200"
+                    @input="setSystemConditionValue('0', $event.target.value)"
+                  />
+                </label>
+                <label>
+                  <span>DE3 Process Code</span>
+                  <input
+                    :value="systemConditionInputValue('3')"
+                    maxlength="6"
+                    placeholder="例如 000000"
+                    @input="setSystemConditionValue('3', $event.target.value)"
+                  />
+                </label>
               </div>
             </div>
-            <div v-if="!actionReturnsResponse" class="notice muted-notice">
-              <AlertTriangle :size="17" />
-              <span>当前动作不会返回 ISO 报文，因此不需要配置响应字段。</span>
-            </div>
-          </div>
 
-          <div v-if="ruleSection === 'match'" class="form-section">
-            <div class="section-title">
-              <h2>附加字段条件</h2>
-              <span class="tooltip-trigger" tabindex="0" :data-tooltip="`能力前提固定为请求 MTI 和 DE3，始终 AND；这里仅配置额外字段条件，并按 ${editingRule.matchMode} 关系评估。`">?</span>
-            </div>
-            <div class="table-lines">
-              <div class="table-line condition-line" v-for="(condition, index) in editingRule.conditions" :key="index">
-                <div class="condition-field-block">
+            <div class="rule-work-panel filters-panel">
+              <div class="rule-panel-title">
+                <strong>过滤条件</strong>
+                <div class="compact-choice-group" role="group" aria-label="条件关系">
+                  <span>满足</span>
+                  <button type="button" :class="{ active: editingRule.matchMode === 'ALL' }" @click="editingRule.matchMode = 'ALL'">全部 ALL</button>
+                  <button type="button" :class="{ active: editingRule.matchMode === 'ANY' }" @click="editingRule.matchMode = 'ANY'">任一 ANY</button>
+                </div>
+              </div>
+              <div class="rule-table filter-table">
+                <div class="rule-table-head">
+                  <span>域</span>
+                  <span>类型</span>
+                  <span>条件</span>
+                  <span>目标值</span>
+                  <span>操作</span>
+                </div>
+                <div class="rule-table-row condition-line" v-for="(condition, index) in editingRule.conditions" :key="index">
                   <label class="field-ref-input">
-                    <span>字段</span>
                     <input placeholder="3 或 DE3" v-model="condition.field" @blur="normalizeConditionField(condition)" />
                     <small v-if="condition.field">{{ formatFieldLabel(condition.field) }}</small>
                   </label>
@@ -579,103 +522,100 @@
                     <strong>{{ conditionFieldTypeLabel(condition) }}</strong>
                     <span>{{ conditionFieldHint(condition) }}</span>
                   </div>
+                  <label class="operator-field">
+                    <select v-model="condition.operator" @change="ensureConditionOperator(condition)">
+                      <option v-for="op in conditionOperatorOptions(condition)" :key="op.value" :value="op.value">
+                        {{ op.label }}
+                      </option>
+                    </select>
+                  </label>
+                  <label v-if="conditionNeedsValue(condition.operator)" class="condition-value-field">
+                    <input
+                      :inputmode="conditionInputMode(condition)"
+                      :placeholder="conditionValuePlaceholder(condition)"
+                      v-model="condition.value"
+                    />
+                  </label>
+                  <div v-else class="linked-hint condition-value-field">
+                    无需填写
+                  </div>
+                  <button type="button" title="移除" @click="editingRule.conditions.splice(index, 1)">
+                    <X :size="16" />
+                  </button>
                 </div>
-                <label class="operator-field">
-                  <span>操作符</span>
-                  <select v-model="condition.operator" @change="ensureConditionOperator(condition)">
-                    <option v-for="op in conditionOperatorOptions(condition)" :key="op.value" :value="op.value">
-                      {{ op.label }}
-                    </option>
-                  </select>
-                </label>
-                <label v-if="conditionNeedsValue(condition.operator)" class="condition-value-field">
-                  <span>{{ conditionValueLabel(condition) }}</span>
-                  <input
-                    :inputmode="conditionInputMode(condition)"
-                    :placeholder="conditionValuePlaceholder(condition)"
-                    v-model="condition.value"
-                  />
-                </label>
-                <div
-                  v-else
-                  class="linked-hint condition-value-field"
-                >
-                  无需填写值
+                <div v-if="editingRule.conditions.length === 0" class="rule-table-empty">
+                  未设置附加过滤条件，仅按能力前提匹配。
                 </div>
-                <button type="button" title="移除" @click="editingRule.conditions.splice(index, 1)">
-                  <X :size="16" />
+              </div>
+              <div class="rule-panel-footer">
+                <button type="button" class="secondary" @click="addCondition">
+                  <Plus :size="16" />
+                  添加过滤字段
                 </button>
+                <span>数值字段会先转换为数字再比较，例如 DE4 的 000020000 按 20000 判断。</span>
               </div>
             </div>
-            <div class="condition-type-legend">
-              <span>数值字段会先转换为数字再比较，例如 DE4 的 000020000 可按 20000 判断。</span>
-              <span>文本和二进制字段不显示大小比较。</span>
-            </div>
-            <button type="button" class="secondary" @click="addCondition">
-              <Plus :size="16" />
-              添加条件
-            </button>
           </div>
 
           <div v-if="ruleSection === 'behavior'" class="form-section">
-            <div class="section-title">
-              <h2>动作</h2>
-              <span class="tooltip-trigger" tabindex="0" :data-tooltip="actionSummary">?</span>
-            </div>
-            <div class="choice-card-grid action-choice-grid">
-              <button
-                v-for="action in actionOptions"
-                :key="action.type"
-                type="button"
-                class="choice-card"
-                :class="{ active: editingRule.action.type === action.type }"
-                @click="editingRule.action.type = action.type"
-              >
-                <strong>{{ action.label }}</strong>
-                <span>{{ action.description }}</span>
-                <code>{{ action.type }}</code>
-              </button>
-            </div>
-            <div v-if="actionUsesDelay" class="inline-setting">
-              <label>
-                <span>延迟毫秒</span>
-                <input type="number" v-model.number="editingRule.action.delayMs" />
-              </label>
-            </div>
-          </div>
-
-          <div v-if="ruleSection === 'behavior' && actionReturnsResponse" class="form-section">
-            <div class="section-title">
-              <h2>响应字段</h2>
-              <span class="tooltip-trigger" tabindex="0" data-tooltip="只覆盖已配置字段；未填写字段默认沿用请求。响应 MTI 默认随能力生成，也可以在能力前提里手动修改。">?</span>
-            </div>
-            <div class="segmented-control">
-              <button type="button" :class="{ active: responseInputMode === 'fields' }" @click="responseInputMode = 'fields'">键值对</button>
-              <button type="button" :class="{ active: responseInputMode === 'xml' }" @click="responseInputMode = 'xml'">XML 导入</button>
-            </div>
-            <div v-if="responseInputMode === 'xml'" class="response-import">
-              <label class="wide-field">
-                <span>导入 XML</span>
-                <CodeEditor class="xml-import-textarea" language="xml" v-model="responseXmlImport" placeholder="<isomsg>...</isomsg>" />
-              </label>
-              <div class="form-line">
-                <button type="button" class="secondary" @click="importResponseXml">
-                  <Upload :size="16" />
-                  导入 XML
-                </button>
-                <label class="file-picker compact-picker">
-                  <Upload :size="16" />
-                  <span>上传 XML</span>
-                  <input type="file" accept=".xml,text/xml" @change="readResponseXmlFile" />
+            <div class="rule-work-panel action-panel">
+              <div class="rule-panel-title">
+                <strong>动作</strong>
+                <span>{{ actionSummary }}</span>
+              </div>
+              <div class="action-editor-grid">
+                <label>
+                  <span>命中动作</span>
+                  <select v-model="editingRule.action.type">
+                    <option v-for="action in actionOptions" :key="action.type" :value="action.type">
+                      {{ action.label }}
+                    </option>
+                  </select>
+                </label>
+                <label v-if="actionUsesDelay">
+                  <span>延迟毫秒</span>
+                  <input type="number" v-model.number="editingRule.action.delayMs" />
+                </label>
+                <label v-if="actionReturnsResponse">
+                  <span>响应 MTI</span>
+                  <input v-model="editingRule.response.mti" maxlength="4" placeholder="例如 0210" />
                 </label>
               </div>
+              <div v-if="!actionReturnsResponse" class="notice muted-notice compact-notice">
+                <AlertTriangle :size="17" />
+                <span>当前动作不会返回 ISO 报文，因此不需要配置响应字段。</span>
+              </div>
             </div>
-            <div v-if="responseInputMode === 'fields'">
-              <label class="wide-field">
-                <span>字段覆盖</span>
-              </label>
-              <div class="table-lines">
-                <div class="table-line kv-line" v-for="field in responseRows" :key="field.key">
+
+            <div v-if="actionReturnsResponse" class="rule-work-panel response-panel">
+              <div class="rule-panel-title">
+                <strong>响应字段</strong>
+                <div class="segmented-control compact-segmented">
+                  <button type="button" :class="{ active: responseInputMode === 'fields' }" @click="responseInputMode = 'fields'">键值对</button>
+                  <button type="button" :class="{ active: responseInputMode === 'xml' }" @click="responseInputMode = 'xml'">XML 导入</button>
+                </div>
+              </div>
+              <div v-if="responseInputMode === 'xml'" class="response-import">
+                <CodeEditor class="xml-import-textarea" language="xml" v-model="responseXmlImport" placeholder="<isomsg>...</isomsg>" />
+                <div class="form-line">
+                  <button type="button" class="secondary" @click="importResponseXml">
+                    <Upload :size="16" />
+                    导入 XML
+                  </button>
+                  <label class="file-picker compact-picker">
+                    <Upload :size="16" />
+                    <span>上传 XML</span>
+                    <input type="file" accept=".xml,text/xml" @change="readResponseXmlFile" />
+                  </label>
+                </div>
+              </div>
+              <div v-if="responseInputMode === 'fields'" class="rule-table response-table">
+                <div class="rule-table-head">
+                  <span>域</span>
+                  <span>返回值</span>
+                  <span>操作</span>
+                </div>
+                <div class="rule-table-row kv-line" v-for="field in responseRows" :key="field.key">
                   <label class="field-ref-input">
                     <input placeholder="39 或 DE39" v-model="field.key" @change="normalizeResponseRow(field)" />
                     <small v-if="field.key">{{ formatFieldLabel(field.key) }}</small>
@@ -685,10 +625,13 @@
                     <X :size="16" />
                   </button>
                 </div>
+                <div v-if="responseRows.length === 0" class="rule-table-empty">
+                  未设置响应覆盖字段，默认沿用请求字段。
+                </div>
               </div>
-              <button type="button" class="secondary" @click="addResponseRow">
+              <button v-if="responseInputMode === 'fields'" type="button" class="secondary" @click="addResponseRow">
                 <Plus :size="16" />
-                添加字段
+                添加响应字段
               </button>
             </div>
           </div>

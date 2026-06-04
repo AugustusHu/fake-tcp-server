@@ -5932,6 +5932,245 @@ code,
   color: #7dd3fc !important;
 }
 
+/* Rule detail: compact rule editor focused on condition and response */
+.rule-detail-page {
+  padding: 8px 12px !important;
+}
+
+.rule-detail-editor {
+  display: grid;
+  gap: 8px;
+  max-width: none;
+  padding: 0 !important;
+}
+
+.rule-detail-editor .editor-header {
+  background: #202024;
+  border: 1px solid #303038;
+  min-height: 46px;
+  padding: 8px 10px;
+}
+
+.rule-detail-editor .editor-header h2 {
+  font-size: 17px;
+}
+
+.rule-detail-editor .editor-header p {
+  color: #a6a6b0;
+  font-family: "JetBrains Mono", "Fira Code", "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.rule-detail-editor .form-nav {
+  margin-top: 0;
+}
+
+.rule-detail-editor .form-section {
+  border-top: 0;
+  display: grid;
+  gap: 8px;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.rule-meta-strip,
+.rule-work-panel {
+  background: #202024;
+  border: 1px solid #303038;
+  border-radius: 4px;
+}
+
+.rule-meta-strip {
+  align-items: end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(260px, 1fr) 132px 92px;
+  padding: 10px;
+}
+
+.rule-meta-strip label,
+.trigger-grid label,
+.action-editor-grid label {
+  gap: 4px;
+}
+
+.rule-meta-strip label > span,
+.trigger-grid label > span,
+.action-editor-grid label > span {
+  color: #a6a6b0;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.rule-detail-page input,
+.rule-detail-page select {
+  min-height: 30px;
+  padding: 5px 8px;
+}
+
+.compact-switch {
+  align-self: end;
+  min-height: 30px;
+  padding: 5px 8px;
+}
+
+.rule-work-panel {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.rule-panel-title {
+  align-items: center;
+  border-bottom: 1px solid #303038;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  min-height: 30px;
+  padding-bottom: 8px;
+}
+
+.rule-panel-title strong {
+  color: #f3f3f6;
+  font-size: 15px;
+}
+
+.rule-panel-title > span,
+.rule-panel-footer span {
+  color: #a6a6b0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.trigger-grid,
+.action-editor-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(220px, 1fr) 150px 190px;
+}
+
+.action-editor-grid {
+  grid-template-columns: minmax(220px, 0.8fr) 160px 150px;
+}
+
+.compact-choice-group {
+  align-items: center;
+  display: inline-flex;
+  gap: 5px;
+}
+
+.compact-choice-group span {
+  color: #a6a6b0;
+  font-size: 12px;
+}
+
+.compact-choice-group button {
+  background: #242428;
+  border-color: #383840;
+  color: #d7d7dc;
+  min-height: 26px;
+  padding: 3px 7px;
+}
+
+.compact-choice-group button.active {
+  background: #2a2a30;
+  border-color: #4a4a52;
+  box-shadow: inset 0 -1px 0 #ff6c37;
+  color: #ffffff;
+}
+
+.rule-table {
+  border: 1px solid #303038;
+  display: grid;
+  overflow: hidden;
+}
+
+.rule-table-head,
+.rule-table-row {
+  display: grid;
+}
+
+.filter-table .rule-table-head,
+.filter-table .rule-table-row {
+  grid-template-columns: minmax(110px, 0.7fr) minmax(128px, 0.72fr) minmax(130px, 0.72fr) minmax(220px, 1.4fr) 42px;
+}
+
+.response-table .rule-table-head,
+.response-table .rule-table-row {
+  grid-template-columns: minmax(120px, 0.35fr) minmax(240px, 1fr) 42px;
+}
+
+.rule-table-head {
+  background: #242428;
+  border-bottom: 1px solid #303038;
+  color: #a6a6b0;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.rule-table-head span {
+  border-right: 1px solid #303038;
+  padding: 6px 8px;
+}
+
+.rule-table-head span:last-child {
+  border-right: 0;
+}
+
+.rule-table-row {
+  align-items: start;
+  background: #1b1b20 !important;
+  border-bottom: 1px solid #303038;
+  gap: 6px;
+  padding: 7px;
+}
+
+.rule-table-row:last-of-type {
+  border-bottom: 0;
+}
+
+.rule-table-row > button {
+  min-height: 30px;
+  padding: 5px;
+}
+
+.rule-table-row .field-type-chip {
+  min-height: 30px;
+  padding: 5px 7px;
+}
+
+.rule-table-row .field-type-chip span {
+  display: none;
+}
+
+.rule-table-row .linked-hint {
+  min-height: 30px;
+  padding: 6px 8px;
+}
+
+.rule-table-empty {
+  color: #85858e;
+  font-size: 12px;
+  padding: 10px;
+}
+
+.rule-panel-footer {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.compact-segmented {
+  margin-top: 0 !important;
+}
+
+.compact-notice {
+  margin-top: 0;
+  padding: 8px 10px;
+}
+
 /* Rule detail: capability is a single form value, not a card grid */
 .capability-select-layout {
   display: grid;
