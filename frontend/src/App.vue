@@ -3680,7 +3680,7 @@ function capabilitySystemConditions(value) {
 function ensureSystemConditions(rule, capability, reset = false) {
   const defaults = capabilitySystemConditions(capability.value);
   const existing = Array.isArray(rule.systemConditions) ? rule.systemConditions : [];
-  rule.systemConditions = defaults.map((defaultCondition) => {
+  const nextConditions = defaults.map((defaultCondition) => {
     const current = reset
       ? null
       : existing.find((condition) => canonicalFieldKey(condition?.field) === defaultCondition.field);
@@ -3690,6 +3690,13 @@ function ensureSystemConditions(rule, capability, reset = false) {
       value: current?.value || defaultCondition.value
     };
   });
+  const unchanged = existing.length === nextConditions.length && nextConditions.every((nextCondition) => {
+    const current = existing.find((condition) => canonicalFieldKey(condition?.field) === nextCondition.field);
+    return current?.operator === nextCondition.operator && current?.value === nextCondition.value;
+  });
+  if (reset || !unchanged) {
+    rule.systemConditions = nextConditions;
+  }
 }
 
 function systemConditionByField(field) {
