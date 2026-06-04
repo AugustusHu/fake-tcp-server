@@ -2918,7 +2918,8 @@ const isUsernameDuplicate = computed(() => {
 const activeMcpTokens = computed(() => mcpTokens.value.filter((token) => !token.revoked));
 const activeTokenCount = computed(() => activeMcpTokens.value.length);
 const tokenLimitReached = computed(() => activeTokenCount.value >= 3);
-const mcpEndpointUrl = computed(() => `${window.location.origin}/mcp`);
+const appBasePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+const mcpEndpointUrl = computed(() => `${window.location.origin}${appBasePath}/mcp`);
 const backendMcpEndpointUrl = computed(() => `${window.location.protocol}//${window.location.hostname}:18080/mcp`);
 const isChannelCodeDuplicate = computed(() => {
   const code = (channelEditor.value.channelCode || '').trim();

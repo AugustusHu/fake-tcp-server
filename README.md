@@ -64,23 +64,15 @@ Default local bindings:
 
 - Frontend container: `127.0.0.1:5173 -> frontend:80`
 - Backend API/MCP: `127.0.0.1:18080 -> backend:18080`
-- Mock TCP range: `127.0.0.1:15400-15700 -> backend:14400-14700`
+- Mock TCP range: `127.0.0.1:15400-15409 -> backend:14400-14409`
 
-Web uses HTTP reverse proxy. Install `deploy/nginx/faker-web.conf` under the host Nginx HTTP config, then replace the example `server_name` with your real domain.
+Web uses HTTP reverse proxy under `/faker/`, so Faker does not take over the whole domain. Include `deploy/nginx/faker-web.conf` inside your existing host Nginx HTTP `server {}` block.
 
-Mock TCP uses Nginx stream forwarding, also known as layer-4 forwarding. Install `deploy/nginx/faker-stream.conf` inside the host Nginx top-level `stream {}` context. It forwards public `<your-domain>:14400` to local `127.0.0.1:15400`, which maps to Faker's internal `14400`.
-
-To expose the whole allowed Mock TCP range, generate the stream server blocks:
-
-```bash
-sh deploy/nginx/generate-faker-stream-conf.sh > /etc/nginx/conf.d/faker-stream-ports.conf
-```
-
-Then include it from the host Nginx top-level `stream {}` block:
+Mock TCP uses Nginx stream forwarding, also known as layer-4 forwarding. Include `deploy/nginx/faker-stream.conf` inside the host Nginx top-level `stream {}` block. The sample exposes 10 public ports, `14400-14409`, and forwards them to local `127.0.0.1:15400-15409`.
 
 ```nginx
 stream {
-    include /etc/nginx/conf.d/faker-stream-ports.conf;
+    include /path/to/fake-tcp-server/deploy/nginx/faker-stream.conf;
 }
 ```
 
@@ -100,7 +92,7 @@ systemctl reload nginx
 Open firewall ports as needed:
 
 - `80` or `443` for Web.
-- `14400-14700` for Mock TCP channels.
+- `14400-14409` for Mock TCP channels.
 
 ## Channel configuration
 

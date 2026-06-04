@@ -1,9 +1,10 @@
 const authStorageKey = 'fakeTcpAuthToken';
 const jsonHeaders = { 'Content-Type': 'application/json' };
+const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
 let authToken = localStorage.getItem(authStorageKey) || '';
 
 async function request(path, options = {}) {
-  const response = await fetch(path, withAuth(options));
+  const response = await fetch(resolvePath(path), withAuth(options));
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     if (response.status === 401) {
@@ -18,7 +19,7 @@ async function request(path, options = {}) {
 }
 
 async function requestText(path, options = {}) {
-  const response = await fetch(path, withAuth(options));
+  const response = await fetch(resolvePath(path), withAuth(options));
   if (!response.ok) {
     const body = await response.text().catch(() => '');
     if (response.status === 401) {
@@ -35,6 +36,13 @@ function withAuth(options = {}) {
     headers.Authorization = `Bearer ${authToken}`;
   }
   return { ...options, headers };
+}
+
+function resolvePath(path) {
+  if (!path || /^https?:\/\//i.test(path)) {
+    return path;
+  }
+  return `${basePath}${path}`;
 }
 
 function setAuthToken(token) {
