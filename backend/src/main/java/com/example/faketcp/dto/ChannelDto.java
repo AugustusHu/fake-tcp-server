@@ -12,6 +12,7 @@ public class ChannelDto {
     private int port;
     private String framing;
     private String packager;
+    private String mockAccessHost;
     private String thirdPartyTestIp;
     private Integer thirdPartyTestPort;
     private boolean thirdPartyTlsEnabled;
@@ -85,6 +86,14 @@ public class ChannelDto {
 
     public void setPackager(String packager) {
         this.packager = packager;
+    }
+
+    public String getMockAccessHost() {
+        return mockAccessHost;
+    }
+
+    public void setMockAccessHost(String mockAccessHost) {
+        this.mockAccessHost = mockAccessHost;
     }
 
     public String getThirdPartyTestIp() {

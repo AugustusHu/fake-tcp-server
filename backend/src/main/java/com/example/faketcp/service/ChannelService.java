@@ -59,12 +59,14 @@ public class ChannelService {
             "mockCtmk2");
 
     private final Map<String, ChannelProperties> staticChannels;
+    private final String mockAccessHost;
     private final ChannelRepository channelRepository;
     private final PackagerFactory packagerFactory;
 
     public ChannelService(FakeTcpProperties properties, ChannelRepository channelRepository, PackagerFactory packagerFactory) {
         this.staticChannels = properties.getChannels().stream()
                 .collect(Collectors.toMap(ChannelProperties::getId, Function.identity()));
+        this.mockAccessHost = blankToDefault(properties.getMockAccess() == null ? null : properties.getMockAccess().getHost(), "127.0.0.1");
         this.channelRepository = channelRepository;
         this.packagerFactory = packagerFactory;
     }
@@ -222,6 +224,7 @@ public class ChannelService {
         } else {
             dto.setPackager(channel.getIso8583().getPackager().getClassName());
         }
+        dto.setMockAccessHost(mockAccessHost);
         dto.setSource(source);
         dto.setRestartRequired(restartRequired);
         dto.setRestartRequiredFields(RESTART_REQUIRED_FIELDS);
@@ -444,6 +447,10 @@ public class ChannelService {
 
     private String blankToNull(String value) {
         return isBlank(value) ? null : value.trim();
+    }
+
+    private String blankToDefault(String value, String defaultValue) {
+        return isBlank(value) ? defaultValue : value.trim();
     }
 
     private void validateUniqueCode(String channelCode, String channelId) {

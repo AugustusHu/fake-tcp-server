@@ -16,6 +16,8 @@ logging:
     com.example.faketcp: INFO
 
 fake-tcp:
+  mockAccess:
+    host: ${FAKER_MOCK_ACCESS_HOST:127.0.0.1}
   mockTls:
     keyStore: ${FAKER_MOCK_TLS_KEY_STORE:}
     keyStoreType: ${FAKER_MOCK_TLS_KEY_STORE_TYPE:PKCS12}

@@ -78,6 +78,8 @@ Default local bindings:
 - Backend API/MCP: `127.0.0.1:18080 -> backend:18080`
 - Mock TCP range: `127.0.0.1:15400-15409 -> backend:14400-14409`
 
+Set `FAKER_MOCK_ACCESS_HOST` to the host or IP users should call for Mock TCP traffic. This value is shown in the UI for every channel as a deployment access hint; it does not change listener binding.
+
 Web uses HTTP reverse proxy under `/faker/`, so Faker does not take over the whole domain. Include `deploy/nginx/faker-web.conf` inside your existing host Nginx HTTP `server {}` block.
 
 Mock TCP uses Nginx stream forwarding, also known as layer-4 forwarding. Include `deploy/nginx/faker-stream.conf` inside the host Nginx top-level `stream {}` block. The sample exposes 10 public ports, `14400-14409`, and forwards them to local `127.0.0.1:15400-15409`.

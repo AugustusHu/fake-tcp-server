@@ -24,6 +24,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/fake_tcp_server?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: fake
       SPRING_DATASOURCE_PASSWORD: fake
+      FAKER_MOCK_ACCESS_HOST: ${FAKER_MOCK_ACCESS_HOST:-127.0.0.1}
     ports:
       - "18080:18080"
       - "14400:14400"

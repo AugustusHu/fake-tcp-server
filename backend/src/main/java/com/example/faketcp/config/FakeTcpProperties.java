@@ -10,6 +10,7 @@ import org.springframework.validation.annotation.Validated;
 public class FakeTcpProperties {
     private List<ChannelProperties> channels = new ArrayList<>();
     private MockTlsProperties mockTls = new MockTlsProperties();
+    private MockAccessProperties mockAccess = new MockAccessProperties();
 
     public List<ChannelProperties> getChannels() {
         return channels;
@@ -25,5 +26,13 @@ public class FakeTcpProperties {
 
     public void setMockTls(MockTlsProperties mockTls) {
         this.mockTls = mockTls;
+    }
+
+    public MockAccessProperties getMockAccess() {
+        return mockAccess;
+    }
+
+    public void setMockAccess(MockAccessProperties mockAccess) {
+        this.mockAccess = mockAccess;
     }
 }

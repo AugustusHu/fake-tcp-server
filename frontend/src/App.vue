@@ -2356,9 +2356,9 @@
             <span>Mock 环境</span>
           </div>
           <div class="channel-mock-grid">
-            <button type="button" @click="copyChannelMockValue('监听 IP', channelMockHost(selectedChannel))">
-              <span>监听 IP</span>
-              <code>{{ channelMockHost(selectedChannel) }}</code>
+            <button type="button" @click="copyChannelMockValue('调用 IP', channelMockAccessHost(selectedChannel))">
+              <span>调用 IP</span>
+              <code>{{ channelMockAccessHost(selectedChannel) }}</code>
             </button>
             <button type="button" @click="copyChannelMockValue('监听端口', channelMockPort(selectedChannel))">
               <span>监听端口</span>
@@ -2386,7 +2386,7 @@
             <span class="status-dot" :class="{ on: channel.enabled !== false }"></span>
             <span>
               <strong>{{ channelDisplayCode(channel) }}</strong>
-              <small>{{ channelMockTlsLabel(channel) }} {{ channelMockHost(channel) }}:{{ channelMockPort(channel) }} · {{ channel.packager || channel.config?.packager || '-' }}</small>
+              <small>{{ channelMockTlsLabel(channel) }} {{ channelMockAccessHost(channel) }}:{{ channelMockPort(channel) }} · {{ channel.packager || channel.config?.packager || '-' }}</small>
             </span>
             <code v-if="selectedChannel?.id === channel.id">CURRENT</code>
           </button>
@@ -3110,8 +3110,8 @@ function channelConfigValue(channel, key) {
   return channel?.config?.[key] ?? channel?.[key] ?? '';
 }
 
-function channelMockHost(channel) {
-  return channelConfigValue(channel, 'host') || '0.0.0.0';
+function channelMockAccessHost(channel) {
+  return channel?.mockAccessHost || '127.0.0.1';
 }
 
 function channelMockPort(channel) {
