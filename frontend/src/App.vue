@@ -2350,6 +2350,30 @@
             <X :size="16" />
           </button>
         </header>
+        <section v-if="selectedChannel" class="channel-mock-summary" aria-label="当前渠道 Mock 环境">
+          <div class="channel-mock-summary-title">
+            <strong>{{ channelDisplayCode(selectedChannel) }}</strong>
+            <span>Mock 环境</span>
+          </div>
+          <div class="channel-mock-grid">
+            <button type="button" @click="copyChannelMockValue('监听 IP', channelMockHost(selectedChannel))">
+              <span>监听 IP</span>
+              <code>{{ channelMockHost(selectedChannel) }}</code>
+            </button>
+            <button type="button" @click="copyChannelMockValue('监听端口', channelMockPort(selectedChannel))">
+              <span>监听端口</span>
+              <code>{{ channelMockPort(selectedChannel) }}</code>
+            </button>
+            <button type="button" :disabled="!channelMockCtmk1(selectedChannel)" @click="copyChannelMockValue('CTMK1', channelMockCtmk1(selectedChannel))">
+              <span>CTMK1</span>
+              <code>{{ channelMockCtmk1(selectedChannel) || '-' }}</code>
+            </button>
+            <button type="button" :disabled="!channelMockCtmk2(selectedChannel)" @click="copyChannelMockValue('CTMK2', channelMockCtmk2(selectedChannel))">
+              <span>CTMK2</span>
+              <code>{{ channelMockCtmk2(selectedChannel) || '-' }}</code>
+            </button>
+          </div>
+        </section>
         <div class="channel-switch-list">
           <button
             v-for="channel in channels"
@@ -2362,7 +2386,7 @@
             <span class="status-dot" :class="{ on: channel.enabled !== false }"></span>
             <span>
               <strong>{{ channelDisplayCode(channel) }}</strong>
-              <small>TLS {{ channel.port || '-' }} · {{ channel.packager || channel.config?.packager || '-' }}</small>
+              <small>{{ channelMockTlsLabel(channel) }} {{ channelMockHost(channel) }}:{{ channelMockPort(channel) }} · {{ channel.packager || channel.config?.packager || '-' }}</small>
             </span>
             <code v-if="selectedChannel?.id === channel.id">CURRENT</code>
           </button>
@@ -3082,6 +3106,37 @@ function channelDisplayCode(channel) {
   return channel?.channelCode || channel?.code || channel?.name || channel?.id || '-';
 }
 
+function channelConfigValue(channel, key) {
+  return channel?.config?.[key] ?? channel?.[key] ?? '';
+}
+
+function channelMockHost(channel) {
+  return channelConfigValue(channel, 'host') || '0.0.0.0';
+}
+
+function channelMockPort(channel) {
+  return channelConfigValue(channel, 'port') || '-';
+}
+
+function channelMockTlsEnabled(channel) {
+  const value = channelConfigValue(channel, 'mockTlsEnabled');
+  return value === null || value === undefined || value === ''
+    ? true
+    : Boolean(value);
+}
+
+function channelMockTlsLabel(channel) {
+  return channelMockTlsEnabled(channel) ? 'TLS' : 'TCP';
+}
+
+function channelMockCtmk1(channel) {
+  return channelConfigValue(channel, 'mockCtmk1') || channelConfigValue(channel, 'ctmk1') || '';
+}
+
+function channelMockCtmk2(channel) {
+  return channelConfigValue(channel, 'mockCtmk2') || channelConfigValue(channel, 'ctmk2') || '';
+}
+
 function environmentChannelLabel(environment) {
   const channel = channels.value.find((item) => item.id === environment?.channelId)
     || selectedChannel.value
@@ -3565,6 +3620,19 @@ async function copyMcpToken(token) {
     showToast('MCP Token 已复制到剪贴板。', 'success');
   } catch (error) {
     showToast('复制失败，请检查浏览器剪贴板权限。', 'error');
+  }
+}
+
+async function copyChannelMockValue(label, value) {
+  if (!value || value === '-') {
+    showToast(`${label} 为空，无法复制。`, 'error');
+    return;
+  }
+  try {
+    await copyTextToClipboard(String(value));
+    showToast(`${label} 已复制。`, 'success');
+  } catch {
+    showToast(`${label} 复制失败，请检查浏览器剪贴板权限。`, 'error');
   }
 }
 
