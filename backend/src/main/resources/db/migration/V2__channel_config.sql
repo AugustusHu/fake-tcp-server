@@ -1,0 +1,21 @@
+CREATE TABLE channel_config (
+    id VARCHAR(100) PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    host VARCHAR(100) NOT NULL DEFAULT '0.0.0.0',
+    port INT NOT NULL,
+    framing_type VARCHAR(40) NOT NULL DEFAULT 'BINARY_2',
+    byte_order VARCHAR(40) NOT NULL DEFAULT 'BIG_ENDIAN',
+    length_includes VARCHAR(40) NOT NULL DEFAULT 'PAYLOAD',
+    header_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    header_length INT NOT NULL DEFAULT 0,
+    header_response_mode VARCHAR(40) NOT NULL DEFAULT 'NONE',
+    header_fixed_value_hex VARCHAR(512),
+    packager_type VARCHAR(40) NOT NULL DEFAULT 'CLASS',
+    packager_location VARCHAR(1000),
+    packager_class_name VARCHAR(1000),
+    no_match_response_code VARCHAR(10) NOT NULL DEFAULT '96',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_channel_config_port CHECK (port BETWEEN 14400 AND 14700)
+);

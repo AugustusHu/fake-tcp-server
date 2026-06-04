@@ -1,0 +1,45 @@
+server:
+  port: 18080
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/fake_tcp_server?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:fake}
+    password: ${SPRING_DATASOURCE_PASSWORD:fake}
+  flyway:
+    enabled: true
+
+logging:
+  file:
+    name: ${FAKER_LOG_FILE:backend.log}
+  level:
+    com.example.faketcp: INFO
+
+fake-tcp:
+  mockTls:
+    keyStore: ${FAKER_MOCK_TLS_KEY_STORE:}
+    keyStoreType: ${FAKER_MOCK_TLS_KEY_STORE_TYPE:PKCS12}
+    keyStorePassword: ${FAKER_MOCK_TLS_KEY_STORE_PASSWORD:}
+    keyPassword: ${FAKER_MOCK_TLS_KEY_PASSWORD:}
+    protocol: ${FAKER_MOCK_TLS_PROTOCOL:TLS}
+  channels:
+    - id: channel-a
+      name: Channel A
+      enabled: true
+      tcp:
+        host: 0.0.0.0
+        port: 14400
+      framing:
+        type: BINARY_2
+        byteOrder: BIG_ENDIAN
+        lengthIncludes: PAYLOAD
+      header:
+        enabled: false
+        length: 0
+        responseMode: NONE
+      iso8583:
+        packager:
+          type: CLASS
+          className: org.jpos.iso.packager.ISO87APackager
+      noMatch:
+        responseCode: "96"

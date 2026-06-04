@@ -1,0 +1,8 @@
+CREATE TABLE channel_key_setting (
+    channel_id VARCHAR(64) PRIMARY KEY,
+    tpk_plain VARCHAR(128),
+    tsk_plain VARCHAR(128),
+    mac_field VARCHAR(3) NOT NULL DEFAULT '128',
+    mac_algorithm VARCHAR(32) NOT NULL DEFAULT 'ANSI_X9_19',
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
