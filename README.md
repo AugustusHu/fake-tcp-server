@@ -55,10 +55,22 @@ Default services:
 
 Use `docker-compose.prod.yml` when the server already has host Nginx. Containers bind only to `127.0.0.1`; host Nginx owns the public ports.
 
+First deployment:
+
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml ps
 ```
+
+Routine release after code changes:
+
+```bash
+git pull
+docker compose -f docker-compose.prod.yml up -d --build --no-deps backend frontend
+docker compose -f docker-compose.prod.yml ps
+```
+
+The routine release command keeps MySQL running and only recreates application containers. Restart MySQL only when changing MySQL configuration or doing planned database maintenance.
 
 Default local bindings:
 
