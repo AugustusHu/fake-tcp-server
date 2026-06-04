@@ -9,10 +9,12 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      test: ["CMD-SHELL", "mysql -h localhost -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} -e 'SELECT 1' $${MYSQL_DATABASE} >/dev/null 2>&1"]
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
+    restart: unless-stopped
 
   backend:
     build:
@@ -22,12 +24,16 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-fake_tcp_server}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-fake}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-fake}
+      SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT: 60000
+      SPRING_FLYWAY_CONNECT_RETRIES: 30
+      SPRING_FLYWAY_CONNECT_RETRIES_INTERVAL: 2s
     ports:
       - "127.0.0.1:18080:18080"
       - "127.0.0.1:15400-15409:14400-14409"
     depends_on:
       mysql:
         condition: service_healthy
+    restart: unless-stopped
 
   frontend:
     build:
@@ -39,6 +45,7 @@ services:
       - "127.0.0.1:5173:80"
     depends_on:
       - backend
+    restart: unless-stopped
 
 volumes:
   mysql-data:
