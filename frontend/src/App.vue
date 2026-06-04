@@ -1484,10 +1484,12 @@
                   <span>Faker 自己的 Mock TCP 监听环境；CTMK 和 TLS 默认复用第三方测试环境，也可以单独覆盖。</span>
                 </div>
                 <div class="field-grid compact-grid">
-                  <label>
-                    <span>监听地址</span>
-                    <input v-model="channelEditor.host" />
-                  </label>
+                  <div class="readonly-field">
+                    <span>Mock 调用 IP</span>
+                    <button type="button" @click="copyChannelMockValue('调用 IP', channelMockAccessHost(selectedChannel || channels[0]))">
+                      <code>{{ channelMockAccessHost(selectedChannel || channels[0]) }}</code>
+                    </button>
+                  </div>
                   <label>
                     <span>Mock TCP 端口</span>
                     <input type="number" min="14400" max="14700" v-model.number="channelEditor.port" placeholder="14400-14700，系统推荐后确认" />
@@ -5559,6 +5561,7 @@ async function saveChannel() {
   try {
     const payload = {
       ...channelEditor.value,
+      host: '0.0.0.0',
       thirdPartyTestIp,
       thirdPartyTestPort,
       channelCode,

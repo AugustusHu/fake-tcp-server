@@ -5776,6 +5776,38 @@ code,
   color: #e2e2e7 !important;
 }
 
+.channel-create-editor .readonly-field {
+  display: grid;
+  gap: 6px;
+}
+
+.channel-create-editor .readonly-field > span {
+  color: #c9c9d1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.channel-create-editor .readonly-field > button {
+  align-items: center;
+  background: #18181c;
+  border: 1px solid #3c3c44;
+  border-radius: 4px;
+  color: #f2f2f4;
+  display: flex;
+  justify-content: flex-start;
+  min-height: 36px;
+  padding: 0 10px;
+  text-align: left;
+}
+
+.channel-create-editor .readonly-field > button:hover {
+  background: #252529;
+}
+
+.channel-create-editor .readonly-field code {
+  color: #f4d06f;
+}
+
 .channel-create-editor input,
 .channel-create-editor select,
 .channel-create-editor textarea {
