@@ -51,6 +51,57 @@ Default services:
 - MySQL: `localhost:3306`
 - Sample TCP channel: `localhost:14400`
 
+## Production with host Nginx
+
+Use `docker-compose.prod.yml` when the server already has host Nginx. Containers bind only to `127.0.0.1`; host Nginx owns the public ports.
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml ps
+```
+
+Default local bindings:
+
+- Frontend container: `127.0.0.1:5173 -> frontend:80`
+- Backend API/MCP: `127.0.0.1:18080 -> backend:18080`
+- Mock TCP range: `127.0.0.1:15400-15700 -> backend:14400-14700`
+
+Web uses HTTP reverse proxy. Install `deploy/nginx/faker-web.conf` under the host Nginx HTTP config, then replace the example `server_name` with your real domain.
+
+Mock TCP uses Nginx stream forwarding, also known as layer-4 forwarding. Install `deploy/nginx/faker-stream.conf` inside the host Nginx top-level `stream {}` context. It forwards public `<your-domain>:14400` to local `127.0.0.1:15400`, which maps to Faker's internal `14400`.
+
+To expose the whole allowed Mock TCP range, generate the stream server blocks:
+
+```bash
+sh deploy/nginx/generate-faker-stream-conf.sh > /etc/nginx/conf.d/faker-stream-ports.conf
+```
+
+Then include it from the host Nginx top-level `stream {}` block:
+
+```nginx
+stream {
+    include /etc/nginx/conf.d/faker-stream-ports.conf;
+}
+```
+
+Check stream support before enabling the TCP config:
+
+```bash
+nginx -V 2>&1 | grep -- --with-stream
+```
+
+Reload Nginx:
+
+```bash
+nginx -t
+systemctl reload nginx
+```
+
+Open firewall ports as needed:
+
+- `80` or `443` for Web.
+- `14400-14700` for Mock TCP channels.
+
 ## Channel configuration
 
 Channels are configured in `backend/src/main/resources/application.yml`.

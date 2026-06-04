@@ -1,0 +1,42 @@
+services:
+  mysql:
+    image: mysql:8.0.36
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-fake_tcp_server}
+      MYSQL_USER: ${MYSQL_USER:-fake}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-fake}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-fake_tcp_server}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-fake}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-fake}
+    ports:
+      - "127.0.0.1:18080:18080"
+      - "127.0.0.1:15400-15700:14400-14700"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql-data:
