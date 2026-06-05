@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
-    private static final Duration SESSION_TTL = Duration.ofHours(12);
+    private static final Duration SESSION_TTL = Duration.ofDays(7);
 
     private final UserRepository userRepository;
     private final ChannelService channelService;
