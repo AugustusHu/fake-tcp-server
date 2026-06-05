@@ -1,5 +1,8 @@
 package com.example.faketcp.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public class ConditionDto {
     private String field;
     private Operator operator = Operator.EQ;
@@ -41,6 +44,40 @@ public class ConditionDto {
         LT,
         LTE,
         REGEX,
-        IN
+        IN;
+
+        @JsonCreator
+        public static Operator fromJson(String value) {
+            if (value == null || value.trim().isEmpty()) {
+                return EQ;
+            }
+            String normalized = value.trim().toUpperCase();
+            if (normalized.contains(" ")) {
+                normalized = normalized.substring(0, normalized.indexOf(' '));
+            }
+            switch (normalized) {
+                case "=":
+                case "==":
+                    return EQ;
+                case "!=":
+                case "<>":
+                    return NE;
+                case ">":
+                    return GT;
+                case ">=":
+                    return GTE;
+                case "<":
+                    return LT;
+                case "<=":
+                    return LTE;
+                default:
+                    return Operator.valueOf(normalized);
+            }
+        }
+
+        @JsonValue
+        public String toJson() {
+            return name();
+        }
     }
 }

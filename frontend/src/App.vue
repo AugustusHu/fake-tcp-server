@@ -3930,11 +3930,12 @@ async function saveRule() {
     editingRule.value.ownerUsername = currentUser.value?.username || '';
   }
   const isUpdate = Boolean(editingRule.value.id);
+  const payload = ruleSavePayload(editingRule.value);
   try {
     if (isUpdate) {
-      await api.updateRule(selectedChannel.value.id, editingRule.value);
+      await api.updateRule(selectedChannel.value.id, { ...payload, id: editingRule.value.id });
     } else {
-      await api.createRule(selectedChannel.value.id, editingRule.value);
+      await api.createRule(selectedChannel.value.id, payload);
     }
     await loadRules();
     ruleView.value = 'list';
@@ -3942,6 +3943,56 @@ async function saveRule() {
   } catch (error) {
     showToast(error.message || '保存规则失败', 'error');
   }
+}
+
+function ruleSavePayload(rule) {
+  return {
+    name: rule.name || '',
+    description: rule.description || '',
+    enabled: Boolean(rule.enabled),
+    publicRule: Boolean(rule.publicRule),
+    capability: rule.capability || defaultCapability().value,
+    priority: Number(rule.priority) || 0,
+    matchMode: rule.matchMode || 'ALL',
+    systemConditions: cleanConditions(rule.systemConditions),
+    conditions: cleanConditions(rule.conditions),
+    action: {
+      type: rule.action?.type || 'RESPOND',
+      delayMs: Number(rule.action?.delayMs) || 0
+    },
+    response: {
+      mti: rule.response?.mti || capabilityByValue(rule.capability).responseMti,
+      fields: cleanResponseFields(rule.response?.fields)
+    }
+  };
+}
+
+function cleanConditions(conditions) {
+  return (conditions || []).map((condition) => ({
+    field: canonicalFieldKey(condition.field),
+    operator: canonicalConditionOperator(condition.operator),
+    value: condition.value || ''
+  }));
+}
+
+function cleanResponseFields(fields = {}) {
+  const cleaned = {};
+  for (const [key, field] of Object.entries(fields || {})) {
+    const canonicalKey = canonicalFieldKey(key);
+    if (!canonicalKey) continue;
+    if (field && typeof field === 'object') {
+      cleaned[canonicalKey] = {
+        type: field.type || 'FIXED',
+        value: field.value || '',
+        sourceField: canonicalFieldKey(field.sourceField),
+        pattern: field.pattern || '',
+        length: field.length ?? null
+      };
+    } else {
+      cleaned[canonicalKey] = { type: 'FIXED', value: field || '' };
+    }
+  }
+  return cleaned;
 }
 
 function normalizeEditingRuleFields() {
@@ -5737,6 +5788,7 @@ function conditionOperatorOptions(condition) {
 }
 
 function ensureConditionOperator(condition) {
+  condition.operator = canonicalConditionOperator(condition.operator);
   const allowed = conditionOperatorOptions(condition).map((operator) => operator.value);
   if (!allowed.includes(condition.operator)) {
     condition.operator = allowed[0] || 'EQ';
@@ -5744,6 +5796,21 @@ function ensureConditionOperator(condition) {
   if (!conditionNeedsValue(condition.operator)) {
     condition.value = '';
   }
+}
+
+function canonicalConditionOperator(value) {
+  const normalized = String(value || 'EQ').trim().toUpperCase().split(/\s+/)[0];
+  const aliases = {
+    '=': 'EQ',
+    '==': 'EQ',
+    '!=': 'NE',
+    '<>': 'NE',
+    '>': 'GT',
+    '>=': 'GTE',
+    '<': 'LT',
+    '<=': 'LTE'
+  };
+  return aliases[normalized] || normalized;
 }
 
 function ensureRuleConditionOperators(rule) {

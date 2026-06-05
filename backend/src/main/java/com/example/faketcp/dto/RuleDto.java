@@ -1,5 +1,6 @@
 package com.example.faketcp.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -161,14 +162,17 @@ public class RuleDto {
         this.updatedAt = updatedAt;
     }
 
+    @JsonIgnore
     public boolean isRestartRequired() {
         return false;
     }
 
+    @JsonIgnore
     public List<String> getRestartRequiredFields() {
         return Collections.emptyList();
     }
 
+    @JsonIgnore
     public List<String> getHotEffectiveFields() {
         return Arrays.asList(
                 "name",
