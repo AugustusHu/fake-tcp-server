@@ -2,7 +2,9 @@ package com.example.faketcp.api;
 
 import com.example.faketcp.dto.KeySettingsDto;
 import com.example.faketcp.service.KeySettingsService;
+import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,5 +28,10 @@ public class KeySettingsController {
     @PutMapping
     public KeySettingsDto save(@PathVariable String channelId, @RequestBody KeySettingsDto settings) {
         return keySettingsService.save(channelId, settings);
+    }
+
+    @PatchMapping
+    public KeySettingsDto patch(@PathVariable String channelId, @RequestBody Map<String, String> fields) {
+        return keySettingsService.patch(channelId, fields);
     }
 }

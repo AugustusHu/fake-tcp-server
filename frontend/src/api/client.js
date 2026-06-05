@@ -87,6 +87,11 @@ export const api = {
     headers: jsonHeaders,
     body: JSON.stringify(settings)
   }),
+  patchKeySettings: (channelId, fields) => request(`/api/channels/${channelId}/keys`, {
+    method: 'PATCH',
+    headers: jsonHeaders,
+    body: JSON.stringify(fields)
+  }),
   listDebugEnvironments: (userId) => request(`/api/users/${userId}/debug-environments`),
   createDebugEnvironment: (userId, environment) => request(`/api/users/${userId}/debug-environments`, {
     method: 'POST',
@@ -198,6 +203,11 @@ export const api = {
     method: 'POST',
     headers: jsonHeaders,
     body: JSON.stringify({ responseHex })
+  }),
+  decryptKeys: (channelId, payload) => request(`/api/channels/${channelId}/tools/key-decrypt`, {
+    method: 'POST',
+    headers: jsonHeaders,
+    body: JSON.stringify(payload)
   }),
   buildPosDebugXml: (channelId, payload) => request(`/api/channels/${channelId}/debug/pos/build-xml`, {
     method: 'POST',

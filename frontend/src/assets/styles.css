@@ -5506,9 +5506,141 @@ code,
   border-color: #3c3c44;
 }
 
+.key-decrypt-page.single-panel {
+  background: #1e1e1e !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  gap: 12px;
+  margin: 0 !important;
+  min-height: calc(100vh - 44px);
+  padding: 12px 14px !important;
+}
+
+.key-tool-toolbar {
+  margin: -12px -14px 0;
+}
+
+.key-tool-toolbar .secondary,
+.key-tool-toolbar .primary {
+  min-height: 30px;
+  padding: 4px 10px;
+}
+
+.key-decrypt-grid {
+  align-items: start;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(420px, 0.95fr) minmax(420px, 1.05fr);
+  min-height: 0;
+}
+
+.tool-panel {
+  background: #202024;
+  border: 1px solid #34343c;
+  border-radius: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tool-panel-header {
+  align-items: center;
+  background: #252529;
+  border-bottom: 1px solid #34343c;
+  display: flex;
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
+.tool-panel-header strong {
+  color: #f5f5f6;
+  font-size: 13px;
+}
+
+.tool-panel-header span {
+  color: #b8b8c0;
+  font-size: 12px;
+}
+
+.key-decrypt-page .field-grid {
+  padding: 12px;
+}
+
+.key-decrypt-page input {
+  background: #18181c;
+  border-color: #3c3c44;
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+.tool-inline-note {
+  align-items: center;
+  border-top: 1px solid #303038;
+  color: #b8b8c0;
+  display: flex;
+  gap: 7px;
+  min-height: 34px;
+  padding: 7px 12px;
+}
+
+.tool-inline-note svg {
+  color: #f1c97a;
+  flex: 0 0 auto;
+}
+
+.tool-inline-note span {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.key-result-list {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.key-result-list button {
+  align-items: start;
+  background: #18181c !important;
+  border: 1px solid #34343c !important;
+  border-radius: 4px !important;
+  display: grid;
+  gap: 5px;
+  justify-items: stretch;
+  min-height: 50px !important;
+  padding: 8px 10px !important;
+  text-align: left;
+}
+
+.key-result-list button:hover:not(:disabled) {
+  background: #252529 !important;
+  border-color: #4a4a52 !important;
+}
+
+.key-result-list button span {
+  color: #b8b8c0;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.key-result-list button code {
+  color: #ffe29a;
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.tool-empty {
+  margin: 12px;
+  min-height: 144px;
+}
+
 @media (max-width: 1100px) {
   .key-settings-grid {
     grid-template-columns: 1fr !important;
+  }
+
+  .key-decrypt-grid {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -4,6 +4,9 @@ import com.example.faketcp.dto.KeySettingsDto;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -56,6 +59,35 @@ public class KeySettingsRepository {
         return findByChannel(channelId);
     }
 
+    public KeySettingsDto patch(String channelId, Map<String, String> fields) {
+        ensureExists(channelId);
+        if (fields == null || fields.isEmpty()) {
+            return findByChannel(channelId);
+        }
+        List<Object> values = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("UPDATE channel_key_setting SET ");
+        boolean first = true;
+        for (Map.Entry<String, String> entry : fields.entrySet()) {
+            String column = columnName(entry.getKey());
+            if (column == null) {
+                continue;
+            }
+            if (!first) {
+                sql.append(", ");
+            }
+            sql.append(column).append(" = ?");
+            values.add(blankToNull(entry.getValue()));
+            first = false;
+        }
+        if (first) {
+            return findByChannel(channelId);
+        }
+        sql.append(" WHERE channel_id = ?");
+        values.add(channelId);
+        jdbcTemplate.update(sql.toString(), values.toArray());
+        return findByChannel(channelId);
+    }
+
     private KeySettingsDto mapSettings(ResultSet rs, int rowNum) throws SQLException {
         KeySettingsDto settings = new KeySettingsDto();
         settings.setChannelId(rs.getString("channel_id"));
@@ -74,6 +106,30 @@ public class KeySettingsRepository {
         Timestamp updatedAt = rs.getTimestamp("updated_at");
         settings.setUpdatedAt(updatedAt == null ? null : updatedAt.toInstant());
         return settings;
+    }
+
+    private void ensureExists(String channelId) {
+        jdbcTemplate.update(
+                "INSERT IGNORE INTO channel_key_setting (channel_id, mac_field, mac_algorithm) VALUES (?, ?, ?)",
+                channelId,
+                "128",
+                "ANSI_X9_19");
+    }
+
+    private String columnName(String key) {
+        if ("tpkPlain".equals(key)) return "tpk_plain";
+        if ("tskPlain".equals(key)) return "tsk_plain";
+        if ("macField".equals(key)) return "mac_field";
+        if ("macAlgorithm".equals(key)) return "mac_algorithm";
+        if ("testTid".equals(key)) return "test_tid";
+        if ("testPan".equals(key)) return "test_pan";
+        if ("testPin".equals(key)) return "test_pin";
+        if ("testDe14".equals(key)) return "test_de14";
+        if ("testDe42".equals(key)) return "test_de42";
+        if ("testDe18".equals(key)) return "test_de18";
+        if ("testDe43".equals(key)) return "test_de43";
+        if ("testDe49".equals(key)) return "test_de49";
+        return null;
     }
 
     private String blankToNull(String value) {

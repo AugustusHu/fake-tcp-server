@@ -64,6 +64,10 @@
           <Network :size="14" />
           调试工具
         </button>
+        <button type="button" :class="{ active: activeModule === 'tools' }" @click="openToolsModule">
+          <Wrench :size="14" />
+          工具
+        </button>
         <button type="button" :class="{ active: activeModule === 'system' }" @click="openSystemModule">
           <Users :size="14" />
           系统
@@ -274,6 +278,16 @@
             <span>
               <strong>公开规则</strong>
               <small>全局共享</small>
+            </span>
+          </button>
+        </template>
+
+        <template v-else-if="activeModule === 'tools'">
+          <button class="menu-button" :class="{ active: tab === 'key-decrypt' }" @click="openKeyDecryptTool">
+            <KeyRound :size="17" />
+            <span>
+              <strong>密钥转换</strong>
+              <small>TMK / TPK / TSK</small>
             </span>
           </button>
         </template>
@@ -747,6 +761,90 @@
         <div class="mac-policy-panel">
           <strong>默认 MAC 策略</strong>
           <span class="tooltip-trigger" tabindex="0" data-tooltip="TSK 为空：不处理 MAC。TSK 有值：TID-TMK / TID-TPK / TID-TSK 不需要 MAC；其它能力需要 MAC。ANSI X9.19 按 bitmap/能力判定 MAC 域；SHA-256 Field128 固定使用 DE128。">?</span>
+        </div>
+      </section>
+
+      <section v-if="tab === 'key-decrypt'" class="key-decrypt-page single-panel">
+        <div class="workbench-toolbar key-tool-toolbar">
+          <div class="toolbar-meta">
+            <strong>密钥转换</strong>
+            <span>{{ channelDisplayCode(selectedChannel) }} · 默认使用当前渠道 CTMK1/CTMK2</span>
+          </div>
+          <button class="secondary" type="button" @click="resetKeyDecryptForm">
+            <RefreshCw :size="16" />
+            重置
+          </button>
+          <button class="primary" type="button" :disabled="keyDecryptLoading" @click="decryptWorkingKeys">
+            <KeyRound :size="17" />
+            转换
+          </button>
+        </div>
+
+        <div class="key-decrypt-grid">
+          <section class="tool-panel">
+            <header class="tool-panel-header">
+              <strong>输入</strong>
+              <span>{{ keyDecryptUsesManualCtmk ? '手动 CTMK' : '当前渠道 CTMK' }}</span>
+            </header>
+            <div class="field-grid compact-grid">
+              <label>
+                <span>CTMK1</span>
+                <input v-model="keyDecryptForm.ctmk1" spellcheck="false" :placeholder="currentChannelCtmk1 || '默认读取当前渠道'" />
+              </label>
+              <label>
+                <span>CTMK2</span>
+                <input v-model="keyDecryptForm.ctmk2" spellcheck="false" :placeholder="currentChannelCtmk2 || '默认读取当前渠道'" />
+              </label>
+              <label>
+                <span>密文 TMK</span>
+                <input v-model="keyDecryptForm.encryptedTmk" spellcheck="false" placeholder="必填；用于继续解 TPK/TSK" />
+              </label>
+              <label>
+                <span>密文 TPK</span>
+                <input v-model="keyDecryptForm.encryptedTpk" spellcheck="false" placeholder="可选" />
+              </label>
+              <label>
+                <span>密文 TSK</span>
+                <input v-model="keyDecryptForm.encryptedTsk" spellcheck="false" placeholder="可选" />
+              </label>
+            </div>
+            <div class="tool-inline-note">
+              <Info :size="15" />
+              <span>CTMK 为空时使用当前渠道配置；填写任意 CTMK 字段后按手动输入处理。</span>
+            </div>
+          </section>
+
+          <section class="tool-panel key-result-panel">
+            <header class="tool-panel-header">
+              <strong>结果</strong>
+              <span>{{ keyDecryptResult?.ctmkSource === 'MANUAL' ? '手动 CTMK' : '渠道 CTMK' }}</span>
+            </header>
+            <div v-if="!keyDecryptResult" class="empty-inline tool-empty">
+              输入密文后点击转换。
+            </div>
+            <div v-else class="key-result-list">
+              <button type="button" @click="copyToolValue('CTMK 明文', keyDecryptResult.ctmkPlain)">
+                <span>CTMK 明文</span>
+                <code>{{ keyDecryptResult.ctmkPlain || '-' }}</code>
+              </button>
+              <button type="button" :disabled="!keyDecryptResult.tmkPlain" @click="copyToolValue('TMK 明文', keyDecryptResult.tmkPlain)">
+                <span>TMK 明文</span>
+                <code>{{ keyDecryptResult.tmkPlain || '-' }}</code>
+              </button>
+              <button type="button" :disabled="!keyDecryptResult.tpkPlain" @click="copyToolValue('TPK 明文', keyDecryptResult.tpkPlain)">
+                <span>TPK 明文</span>
+                <code>{{ keyDecryptResult.tpkPlain || '-' }}</code>
+              </button>
+              <button type="button" :disabled="!keyDecryptResult.tskPlain" @click="copyToolValue('TSK 明文', keyDecryptResult.tskPlain)">
+                <span>TSK 明文</span>
+                <code>{{ keyDecryptResult.tskPlain || '-' }}</code>
+              </button>
+            </div>
+            <div class="tool-inline-note">
+              <Info :size="15" />
+              <span>{{ keyDecryptResult?.algorithm || '算法：CTMK=CTMK1 XOR CTMK2；Key decrypt=3DES/ECB/NoPadding。' }}</span>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -2501,6 +2599,7 @@ import {
   Upload,
   UserCircle,
   Users,
+  Wrench,
   X,
   XCircle
 } from 'lucide-vue-next';
@@ -2721,7 +2820,11 @@ const testXml = ref(`<isomsg>
 </isomsg>`);
 const testResult = ref('');
 const keySettings = ref(emptyKeySettings());
+const originalKeySettings = ref(emptyKeySettings());
 const keyLoading = ref(false);
+const keyDecryptForm = ref(emptyKeyDecryptForm());
+const keyDecryptResult = ref(null);
+const keyDecryptLoading = ref(false);
 const debugRequest = ref(emptyDebugRequest());
 const debugTidInit = ref(emptyDebugTidInit());
 const debugFieldRows = ref(defaultDebugFieldRows());
@@ -2851,10 +2954,12 @@ const filteredRules = computed(() => selectedCapabilityFilter.value === 'ALL'
 const enabledFilteredRuleCount = computed(() => filteredRules.value.filter((rule) => rule.enabled).length);
 const isValidationTab = computed(() => ['test', 'test-history', 'test-history-detail'].includes(tab.value));
 const isDebugTab = computed(() => ['debug-pos', 'debug-http'].includes(tab.value));
+const isToolTab = computed(() => ['key-decrypt'].includes(tab.value));
 const isUserTab = computed(() => ['users', 'user-detail'].includes(tab.value));
 const activeModule = computed(() => {
   if (['channel-new', 'keys', 'packager-preview'].includes(tab.value)) return 'channel';
   if (isDebugTab.value) return 'debug';
+  if (isToolTab.value) return 'tools';
   if (isUserTab.value) return 'system';
   return 'mock';
 });
@@ -2863,6 +2968,7 @@ const moduleTitle = computed(() => {
     channel: '渠道配置',
     mock: 'Mock工具',
     debug: '调试工具',
+    tools: '工具',
     system: '系统'
   };
   return titles[activeModule.value] || 'Mock工具';
@@ -2872,6 +2978,7 @@ const moduleSubtitle = computed(() => {
     channel: '渠道、Packager、Key',
     mock: '规则、验证、公开复用',
     debug: '真实环境联调',
+    tools: '转换、辅助处理',
     system: '用户、Token、说明'
   };
   return subtitles[activeModule.value] || '';
@@ -2934,6 +3041,7 @@ const pageTitle = computed(() => {
   if (tab.value === 'test-history-detail') return '历史详情';
   if (tab.value === 'debug-pos') return 'POS Debug';
   if (tab.value === 'debug-http') return 'HTTP Debug';
+  if (tab.value === 'key-decrypt') return '密钥转换';
   if (tab.value === 'keys') return 'Key设置';
   if (tab.value === 'public-rules') return '公开规则';
   if (tab.value === 'users') return '用户管理';
@@ -2944,6 +3052,7 @@ const pageScopeLabel = computed(() => {
   if (['rules', 'test', 'test-history', 'test-history-detail'].includes(tab.value)) return '用户数据';
   if (['channel-new', 'keys', 'public-rules'].includes(tab.value)) return '全局数据';
   if (isDebugTab.value) return '联调工具';
+  if (isToolTab.value) return '工具';
   return '';
 });
 const pageScopeClass = computed(() => pageScopeLabel.value === '用户数据' ? 'scope-user' : 'scope-global');
@@ -2965,6 +3074,7 @@ const pageSubtitle = computed(() => {
   if (tab.value === 'test-history-detail') return '当前用户历史；可载入重新验证';
   if (tab.value === 'debug-pos') return '真实第三方测试环境联调；请求、响应、MAC 验证和 Console 日志在同一工作台完成';
   if (tab.value === 'debug-http') return 'HTTP 类接口调试后续扩展，当前先保留模块入口';
+  if (tab.value === 'key-decrypt') return '把密文 TMK/TPK/TSK 转为明文；不落库、不修改环境配置';
   if (tab.value === 'keys') return '全局 Key 配置；对当前渠道下所有用户生效';
   if (tab.value === 'public-rules') return '全局共享规则库；复制后进入当前用户规则';
   return `${channelDisplayCode(selectedChannel.value)} · ${selectedChannel.value.framing} · ${selectedChannel.value.packager}`;
@@ -3103,6 +3213,9 @@ const responseCodeSummary = computed(() => {
   return codes.length ? `DE39 ${codes.join(' / ')}` : (debugResult.value?.success ? '请求完成' : '请求失败');
 });
 const debugConsoleText = computed(() => debugConsoleEntries.value.map((entry) => entry.text).join('\n'));
+const currentChannelCtmk1 = computed(() => channelConfigValue(selectedChannel.value, 'ctmk1'));
+const currentChannelCtmk2 = computed(() => channelConfigValue(selectedChannel.value, 'ctmk2'));
+const keyDecryptUsesManualCtmk = computed(() => Boolean(keyDecryptForm.value.ctmk1.trim() || keyDecryptForm.value.ctmk2.trim()));
 
 function channelDisplayCode(channel) {
   return channel?.channelCode || channel?.code || channel?.name || channel?.id || '-';
@@ -3251,6 +3364,7 @@ async function logout() {
   testHistory.value = [];
   selectedTestHistoryId.value = null;
   keySettings.value = emptyKeySettings();
+  originalKeySettings.value = emptyKeySettings();
   debugRequest.value = emptyDebugRequest();
   debugTidInit.value = emptyDebugTidInit();
   debugFieldRows.value = defaultDebugFieldRows();
@@ -3824,6 +3938,16 @@ function emptyKeySettings() {
   };
 }
 
+function emptyKeyDecryptForm() {
+  return {
+    ctmk1: '',
+    ctmk2: '',
+    encryptedTmk: '',
+    encryptedTpk: '',
+    encryptedTsk: ''
+  };
+}
+
 function emptyDebugRequest() {
   return {
     capability: 'DEBIT',
@@ -4023,6 +4147,10 @@ function openDebugModule() {
   openPosDebug();
 }
 
+function openToolsModule() {
+  openKeyDecryptTool();
+}
+
 function openSystemModule() {
   if (isAdminUser.value) {
     openUsers();
@@ -4080,6 +4208,11 @@ async function openKeys() {
   await loadKeySettings();
 }
 
+function openKeyDecryptTool() {
+  tab.value = 'key-decrypt';
+  resetKeyDecryptForm();
+}
+
 async function openUsers() {
   if (!isAdminUser.value) {
     showToast('只有 admin 可以访问用户管理。', 'warning');
@@ -4094,6 +4227,7 @@ async function loadKeySettings() {
   keyLoading.value = true;
   try {
     keySettings.value = { ...emptyKeySettings(), ...(await api.getKeySettings(selectedChannel.value.id)) };
+    originalKeySettings.value = { ...emptyKeySettings(), ...keySettings.value };
   } catch (error) {
     showToast(error.message || '读取 Key 设置失败', 'error');
   } finally {
@@ -4103,15 +4237,83 @@ async function loadKeySettings() {
 
 async function saveKeySettings() {
   if (!selectedChannel.value) return;
+  const patch = changedKeySettingsFields();
+  if (!Object.keys(patch).length) {
+    showToast('Key 设置没有变化。', 'info');
+    return;
+  }
   keyLoading.value = true;
   try {
-    keySettings.value = await api.saveKeySettings(selectedChannel.value.id, keySettings.value);
+    keySettings.value = await api.patchKeySettings(selectedChannel.value.id, patch);
+    originalKeySettings.value = { ...emptyKeySettings(), ...keySettings.value };
     showToast('Key 设置已保存。', 'success');
   } catch (error) {
     showToast(error.message || '保存 Key 设置失败', 'error');
   } finally {
     keyLoading.value = false;
   }
+}
+
+function changedKeySettingsFields() {
+  const fields = [
+    'tpkPlain',
+    'tskPlain',
+    'macField',
+    'macAlgorithm',
+    'testTid',
+    'testPan',
+    'testPin',
+    'testDe14',
+    'testDe42',
+    'testDe18',
+    'testDe43',
+    'testDe49'
+  ];
+  return fields.reduce((result, field) => {
+    const current = normalizeKeySettingValue(keySettings.value[field]);
+    const original = normalizeKeySettingValue(originalKeySettings.value[field]);
+    if (current !== original) {
+      result[field] = current;
+    }
+    return result;
+  }, {});
+}
+
+function normalizeKeySettingValue(value) {
+  return value === null || value === undefined ? '' : String(value).trim();
+}
+
+function resetKeyDecryptForm() {
+  keyDecryptForm.value = emptyKeyDecryptForm();
+  keyDecryptResult.value = null;
+}
+
+async function decryptWorkingKeys() {
+  if (!selectedChannel.value) return;
+  if (!keyDecryptForm.value.encryptedTmk.trim()) {
+    showToast('密文 TMK 必填。', 'warning');
+    return;
+  }
+  keyDecryptLoading.value = true;
+  try {
+    keyDecryptResult.value = await api.decryptKeys(selectedChannel.value.id, {
+      ctmk1: keyDecryptForm.value.ctmk1.trim(),
+      ctmk2: keyDecryptForm.value.ctmk2.trim(),
+      encryptedTmk: keyDecryptForm.value.encryptedTmk.trim(),
+      encryptedTpk: keyDecryptForm.value.encryptedTpk.trim(),
+      encryptedTsk: keyDecryptForm.value.encryptedTsk.trim()
+    });
+    showToast('密钥转换完成。', 'success');
+  } catch (error) {
+    keyDecryptResult.value = null;
+    showToast(error.message || '密钥转换失败', 'error');
+  } finally {
+    keyDecryptLoading.value = false;
+  }
+}
+
+async function copyToolValue(label, value) {
+  await copyChannelMockValue(label, value);
 }
 
 function hydrateDebugDefaults() {

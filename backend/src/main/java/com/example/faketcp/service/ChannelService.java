@@ -311,6 +311,10 @@ public class ChannelService {
         channel.getIso8583().getPackager().setContent(dto.getPackagerContent());
         channel.getIso8583().getPackager().setClassName(dto.getPackagerClassName());
         channel.getNoMatch().setResponseCode(dto.getNoMatchResponseCode());
+        channel.setCtmk1(dto.getCtmk1());
+        channel.setCtmk2(dto.getCtmk2());
+        channel.setMockCtmk1(dto.getMockCtmk1());
+        channel.setMockCtmk2(dto.getMockCtmk2());
         return channel;
     }
 
@@ -337,6 +341,10 @@ public class ChannelService {
         dto.setPackagerContent(channel.getIso8583().getPackager().getContent());
         dto.setPackagerClassName(channel.getIso8583().getPackager().getClassName());
         dto.setNoMatchResponseCode(channel.getNoMatch().getResponseCode());
+        dto.setCtmk1(channel.getCtmk1());
+        dto.setCtmk2(channel.getCtmk2());
+        dto.setMockCtmk1(channel.getMockCtmk1());
+        dto.setMockCtmk2(channel.getMockCtmk2());
         return dto;
     }
 

@@ -19,6 +19,10 @@ public class ChannelProperties {
     private Iso8583Properties iso8583 = new Iso8583Properties();
     @Valid
     private NoMatchProperties noMatch = new NoMatchProperties();
+    private String ctmk1;
+    private String ctmk2;
+    private String mockCtmk1;
+    private String mockCtmk2;
 
     public String getId() {
         return id;
@@ -82,5 +86,37 @@ public class ChannelProperties {
 
     public void setNoMatch(NoMatchProperties noMatch) {
         this.noMatch = noMatch;
+    }
+
+    public String getCtmk1() {
+        return ctmk1;
+    }
+
+    public void setCtmk1(String ctmk1) {
+        this.ctmk1 = ctmk1;
+    }
+
+    public String getCtmk2() {
+        return ctmk2;
+    }
+
+    public void setCtmk2(String ctmk2) {
+        this.ctmk2 = ctmk2;
+    }
+
+    public String getMockCtmk1() {
+        return mockCtmk1;
+    }
+
+    public void setMockCtmk1(String mockCtmk1) {
+        this.mockCtmk1 = mockCtmk1;
+    }
+
+    public String getMockCtmk2() {
+        return mockCtmk2;
+    }
+
+    public void setMockCtmk2(String mockCtmk2) {
+        this.mockCtmk2 = mockCtmk2;
     }
 }

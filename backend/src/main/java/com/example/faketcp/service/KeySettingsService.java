@@ -5,6 +5,7 @@ import com.example.faketcp.repository.KeySettingsRepository;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 
@@ -48,6 +49,13 @@ public class KeySettingsService {
         validateMaxLength("DE43", normalized.getTestDe43(), 40);
         validatePattern("DE49", normalized.getTestDe49(), "[0-9]{3}", "必须是 3 位数字");
         return normalize(keySettingsRepository.save(channelId, normalized));
+    }
+
+    public KeySettingsDto patch(String channelId, Map<String, String> fields) {
+        channelService.getRequired(channelId);
+        Map<String, String> normalizedFields = normalizePatch(fields);
+        validatePatch(normalizedFields);
+        return normalize(keySettingsRepository.patch(channelId, normalizedFields));
     }
 
     private KeySettingsDto normalize(KeySettingsDto settings) {
@@ -101,6 +109,58 @@ public class KeySettingsService {
 
     private String normalizeMacAlgorithm(String value) {
         return defaultIfBlank(value, ANSI_X9_19).toUpperCase(Locale.ROOT);
+    }
+
+    private Map<String, String> normalizePatch(Map<String, String> fields) {
+        if (fields == null) {
+            return java.util.Collections.emptyMap();
+        }
+        java.util.Map<String, String> normalized = new java.util.LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : fields.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if ("tpkPlain".equals(key) || "tskPlain".equals(key)) {
+                normalized.put(key, clean(value));
+            } else if ("macAlgorithm".equals(key)) {
+                normalized.put(key, normalizeMacAlgorithm(value));
+            } else if ("macField".equals(key)) {
+                normalized.put(key, defaultIfBlank(value, "128"));
+            } else if (isPatchField(key)) {
+                normalized.put(key, trimToNull(value));
+            }
+        }
+        return normalized;
+    }
+
+    private void validatePatch(Map<String, String> fields) {
+        if (fields.containsKey("tpkPlain")) validateKey("TPK", fields.get("tpkPlain"), false);
+        if (fields.containsKey("tskPlain")) validateKey("TSK", fields.get("tskPlain"), false);
+        if (fields.containsKey("macField")
+                && !"64".equals(fields.get("macField")) && !"128".equals(fields.get("macField"))) {
+            throw new IllegalStateException("MAC 字段只支持 64 或 128");
+        }
+        if (fields.containsKey("macAlgorithm") && !SUPPORTED_MAC_ALGORITHMS.contains(fields.get("macAlgorithm"))) {
+            throw new IllegalStateException("MAC 算法只支持 ANSI_X9_19 或 SHA256_FIELD128_TRIM64");
+        }
+        if (fields.containsKey("testTid")) validateMaxLength("测试 TID", fields.get("testTid"), 8);
+        if (fields.containsKey("testPan")) validatePattern("测试 PAN", fields.get("testPan"), "[0-9]{1,19}", "必须是 1 到 19 位数字");
+        if (fields.containsKey("testPin")) validateMaxLength("测试 PIN 信息", fields.get("testPin"), 255);
+        if (fields.containsKey("testDe14")) validatePattern("DE14 卡号有效期", fields.get("testDe14"), "[0-9]{4}", "必须是 YYMM 格式的 4 位数字");
+        if (fields.containsKey("testDe42")) validateMaxLength("DE42", fields.get("testDe42"), 15);
+        if (fields.containsKey("testDe18")) validatePattern("DE18", fields.get("testDe18"), "[0-9]{4}", "必须是 4 位数字");
+        if (fields.containsKey("testDe43")) validateMaxLength("DE43", fields.get("testDe43"), 40);
+        if (fields.containsKey("testDe49")) validatePattern("DE49", fields.get("testDe49"), "[0-9]{3}", "必须是 3 位数字");
+    }
+
+    private boolean isPatchField(String key) {
+        return "testTid".equals(key)
+                || "testPan".equals(key)
+                || "testPin".equals(key)
+                || "testDe14".equals(key)
+                || "testDe42".equals(key)
+                || "testDe18".equals(key)
+                || "testDe43".equals(key)
+                || "testDe49".equals(key);
     }
 
     private String trimToNull(String value) {
