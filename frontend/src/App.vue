@@ -2612,7 +2612,7 @@ const capabilityOptions = [
   { value: 'BALANCE_QUERY', label: '余额查询', requestMti: '0100', processCode: '310000', responseMti: '0110' },
   { value: 'PRE_AUTH', label: '预授权', requestMti: '0100', processCode: '600000', responseMti: '0110' },
   { value: 'PRE_AUTH_COMPLETION', label: '预授权完成', requestMti: '0220', processCode: '610000', responseMti: '0230' },
-  { value: 'REVERSAL', label: '冲正', requestMti: '0400', processCode: '000000', responseMti: '0410' },
+  { value: 'REVERSAL', label: '冲正', requestMti: '0420', processCode: '000000', responseMti: '0421' },
   { value: 'REFUND', label: '退款', requestMti: '0200', processCode: '200000', responseMti: '0210' },
   { value: 'TID_INIT_9A', label: 'TID-TMK', requestMti: '0800', processCode: '9A0000', responseMti: '0810' },
   { value: 'TID_INIT_9G', label: 'TID-TPK', requestMti: '0800', processCode: '9G0000', responseMti: '0810' },

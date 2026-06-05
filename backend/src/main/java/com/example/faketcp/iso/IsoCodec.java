@@ -7,10 +7,14 @@ import org.jpos.iso.ISOBasePackager;
 import org.jpos.iso.ISOFieldPackager;
 import org.jpos.iso.ISOMsg;
 import org.jpos.iso.ISOPackager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class IsoCodec {
+    private static final Logger log = LoggerFactory.getLogger(IsoCodec.class);
+
     public IsoMessageDto unpack(byte[] payload, ISOPackager packager) throws Exception {
         ISOMsg message = new ISOMsg();
         message.setPackager(packager);
@@ -33,20 +37,28 @@ public class IsoCodec {
     }
 
     public byte[] pack(IsoMessageDto dto, ISOPackager packager) throws Exception {
-        ISOMsg message = new ISOMsg();
-        message.setPackager(packager);
-        message.setMTI(dto.getMti());
-        for (Map.Entry<String, String> entry : dto.getFields().entrySet()) {
-            if (entry.getValue() != null && !entry.getValue().trim().isEmpty()) {
-                int field = Integer.parseInt(entry.getKey());
-                if (isBinaryField(packager, field)) {
-                    message.set(field, HexUtils.fromHex(entry.getValue()));
-                } else {
-                    message.set(field, entry.getValue());
+        try {
+            ISOMsg message = new ISOMsg();
+            message.setPackager(packager);
+            message.setMTI(dto.getMti());
+            for (Map.Entry<String, String> entry : dto.getFields().entrySet()) {
+                if (entry.getValue() != null && !entry.getValue().trim().isEmpty()) {
+                    int field = Integer.parseInt(entry.getKey());
+                    if (isBinaryField(packager, field)) {
+                        message.set(field, HexUtils.fromHex(entry.getValue()));
+                    } else {
+                        message.set(field, entry.getValue());
+                    }
                 }
             }
+            return message.pack();
+        } catch (Exception e) {
+            log.warn("ISO pack failed: packager={}, message={}",
+                    packagerName(packager),
+                    IsoLogUtils.messageSummary(dto),
+                    e);
+            throw e;
         }
-        return message.pack();
     }
 
     private boolean isBinaryField(ISOPackager packager, int field) {
@@ -59,5 +71,9 @@ public class IsoCodec {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private String packagerName(ISOPackager packager) {
+        return packager == null ? "<null>" : packager.getClass().getName();
     }
 }

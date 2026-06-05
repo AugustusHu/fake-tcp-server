@@ -8,6 +8,7 @@ import com.example.faketcp.dto.RequestLogDto;
 import com.example.faketcp.dto.RuleDto;
 import com.example.faketcp.iso.HexUtils;
 import com.example.faketcp.iso.IsoCodec;
+import com.example.faketcp.iso.IsoLogUtils;
 import com.example.faketcp.iso.IsoMacService;
 import com.example.faketcp.iso.PackagerFactory;
 import com.example.faketcp.repository.RequestLogRepository;
@@ -159,26 +160,52 @@ public class TcpServerManager {
         IsoMessageDto request = null;
         IsoMessageDto response = null;
         RuleDto matchedRule = null;
+        PayloadParts requestParts = null;
         try {
             requestPayload = runtime.getFramer().readFrame(socket.getInputStream());
-            PayloadParts requestParts = runtime.getHeaderHandler().split(requestPayload);
+            requestParts = runtime.getHeaderHandler().split(requestPayload);
             request = isoCodec.unpack(requestParts.getIsoBody(), runtime.getPackager());
+            log.info("Fake TCP request received: channel={}, remote={}, tls={}, frameBytes={}, headerBytes={}, isoBytes={}, request={}",
+                    channelLabel(runtime.getChannel()),
+                    requestLog.getRemoteAddress(),
+                    socket instanceof SSLSocket,
+                    length(requestPayload),
+                    length(requestParts.getHeader()),
+                    length(requestParts.getIsoBody()),
+                    IsoLogUtils.messageSummary(request));
             requestLog.setMti(request.getMti());
             requestLog.setProcessingCode(request.getFields().get("3"));
             requestLog.setRequestFields(request.getFields());
             KeySettingsDto keySettings = keySettingsService.get(runtime.getChannel().getId());
+            log.info("Fake TCP key settings loaded: channel={}, settings={}",
+                    channelLabel(runtime.getChannel()),
+                    keySettingsSummary(keySettings));
 
             if (!isoMacService.verifyRequestMac(request, runtime.getPackager(), keySettings)) {
                 response = ruleEngine.defaultResponse(request, runtime.getChannel().getNoMatch().getResponseCode());
                 requestLog.setActionType("MAC_INVALID_DEFAULT");
+                log.warn("Fake TCP request MAC invalid: channel={}, defaultResponseCode={}, response={}",
+                        channelLabel(runtime.getChannel()),
+                        runtime.getChannel().getNoMatch().getResponseCode(),
+                        IsoLogUtils.messageSummary(response));
             } else {
                 Optional<com.example.faketcp.rule.RuleMatchResult> match =
                         ruleEngine.match(ruleRepository.findEnabledByChannel(runtime.getChannel().getId()), request, runtime.getFieldValueTypes());
                 if (match.isPresent()) {
                     matchedRule = match.get().getRule();
                     response = match.get().getResponse();
+                    log.info("Fake TCP rule matched: channel={}, ruleId={}, ruleName={}, action={}, response={}",
+                            channelLabel(runtime.getChannel()),
+                            matchedRule.getId(),
+                            matchedRule.getName(),
+                            matchedRule.getAction().getType(),
+                            IsoLogUtils.messageSummary(response));
                 } else {
                     response = ruleEngine.defaultResponse(request, runtime.getChannel().getNoMatch().getResponseCode());
+                    log.info("Fake TCP rule not matched: channel={}, defaultResponseCode={}, response={}",
+                            channelLabel(runtime.getChannel()),
+                            runtime.getChannel().getNoMatch().getResponseCode(),
+                            IsoLogUtils.messageSummary(response));
                 }
 
                 if (matchedRule != null) {
@@ -191,14 +218,25 @@ public class TcpServerManager {
             }
 
             if (matchedRule != null && matchedRule.getAction().getType() == com.example.faketcp.dto.ActionDto.ActionType.TIMEOUT) {
+                log.info("Fake TCP action executing: channel={}, action=TIMEOUT, ruleId={}, delayMs={}",
+                        channelLabel(runtime.getChannel()),
+                        matchedRule.getId(),
+                        matchedRule.getAction().getDelayMs());
                 sleep(matchedRule.getAction().getDelayMs());
                 return;
             }
             if (matchedRule != null && matchedRule.getAction().getType() == com.example.faketcp.dto.ActionDto.ActionType.DISCONNECT) {
+                log.info("Fake TCP action executing: channel={}, action=DISCONNECT, ruleId={}",
+                        channelLabel(runtime.getChannel()),
+                        matchedRule.getId());
                 socket.close();
                 return;
             }
             if (matchedRule != null && matchedRule.getAction().getType() == com.example.faketcp.dto.ActionDto.ActionType.DELAY_RESPOND) {
+                log.info("Fake TCP action executing: channel={}, action=DELAY_RESPOND, ruleId={}, delayMs={}",
+                        channelLabel(runtime.getChannel()),
+                        matchedRule.getId(),
+                        matchedRule.getAction().getDelayMs());
                 sleep(matchedRule.getAction().getDelayMs());
             }
 
@@ -207,10 +245,26 @@ public class TcpServerManager {
             responsePayload = runtime.getHeaderHandler().combine(requestParts.getHeader(), isoBody);
             socket.getOutputStream().write(runtime.getFramer().writeFrame(responsePayload));
             socket.getOutputStream().flush();
+            log.info("Fake TCP response sent: channel={}, remote={}, isoBytes={}, frameBytes={}, response={}",
+                    channelLabel(runtime.getChannel()),
+                    requestLog.getRemoteAddress(),
+                    length(isoBody),
+                    length(responsePayload),
+                    IsoLogUtils.messageSummary(response));
             requestLog.setResponseFields(response.getFields());
             requestLog.setResponseCode(response.getFields().get("39"));
         } catch (Exception e) {
             requestLog.setErrorMessage(e.getMessage());
+            log.warn("Fake TCP request failed: channel={}, remote={}, frameBytes={}, headerBytes={}, isoBytes={}, request={}, response={}, error={}",
+                    channelLabel(runtime.getChannel()),
+                    requestLog.getRemoteAddress(),
+                    length(requestPayload),
+                    requestParts == null ? 0 : length(requestParts.getHeader()),
+                    requestParts == null ? 0 : length(requestParts.getIsoBody()),
+                    IsoLogUtils.messageSummary(request),
+                    IsoLogUtils.messageSummary(response),
+                    e.toString(),
+                    e);
             throw e;
         } finally {
             requestLog.setRequestHex(HexUtils.toHex(requestPayload));
@@ -224,5 +278,23 @@ public class TcpServerManager {
         if (delayMs > 0) {
             Thread.sleep(delayMs);
         }
+    }
+
+    private String channelLabel(ChannelProperties channel) {
+        return channel.getName() + "(" + channel.getId() + ":" + channel.getTcp().getPort() + ")";
+    }
+
+    private String keySettingsSummary(KeySettingsDto settings) {
+        if (settings == null) {
+            return "<null>";
+        }
+        return "algorithm=" + settings.getMacAlgorithm()
+                + ", configuredMacField=DE" + settings.getMacField()
+                + ", tsk=" + IsoLogUtils.keyFingerprint(settings.getTskPlain())
+                + ", tpk=" + IsoLogUtils.keyFingerprint(settings.getTpkPlain());
+    }
+
+    private int length(byte[] value) {
+        return value == null ? 0 : value.length;
     }
 }

@@ -10,10 +10,13 @@ import java.util.Map;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import org.jpos.iso.ISOPackager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class IsoMacService {
+    private static final Logger log = LoggerFactory.getLogger(IsoMacService.class);
     private static final byte[] ZERO_IV = new byte[8];
     private static final String ANSI_X9_19 = "ANSI_X9_19";
     private static final String SHA256_FIELD128_TRIM64 = "SHA256_FIELD128_TRIM64";
@@ -34,24 +37,52 @@ public class IsoMacService {
 
     public boolean verifyRequestMac(IsoMessageDto request, ISOPackager packager, KeySettingsDto settings) throws Exception {
         if (!macRequired(settings, request)) {
+            log.info("ISO MAC verify skipped: reason={}, settings={}, request={}",
+                    macSkipReason(settings, request),
+                    settingsSummary(settings),
+                    IsoLogUtils.messageSummary(request));
             return true;
         }
         String macField = macField(request, settings);
         String actualMac = fieldValue(request, macField);
+        log.info("ISO MAC verify start: settings={}, resolvedMacField=DE{}, actualMac={}, request={}",
+                settingsSummary(settings),
+                macField,
+                cleanHex(actualMac),
+                IsoLogUtils.messageSummary(request));
         if (isBlank(actualMac)) {
+            log.warn("ISO MAC verify failed: missing MAC field DE{}, settings={}, request={}",
+                    macField,
+                    settingsSummary(settings),
+                    IsoLogUtils.messageSummary(request));
             return false;
         }
         String expectedMac = computeMac(request, packager, settings, macField);
-        return cleanHex(actualMac).equals(expectedMac);
+        boolean valid = cleanHex(actualMac).equals(expectedMac);
+        log.info("ISO MAC verify result: resolvedMacField=DE{}, actualMac={}, expectedMac={}, valid={}",
+                macField,
+                cleanHex(actualMac),
+                expectedMac,
+                valid);
+        return valid;
     }
 
     public String sign(IsoMessageDto message, ISOPackager packager, KeySettingsDto settings) throws Exception {
         if (!macRequired(settings, message)) {
+            log.info("ISO MAC sign skipped: reason={}, settings={}, message={}",
+                    macSkipReason(settings, message),
+                    settingsSummary(settings),
+                    IsoLogUtils.messageSummary(message));
             return null;
         }
         String macField = macField(message, settings);
+        log.info("ISO MAC sign start: settings={}, resolvedMacField=DE{}, message={}",
+                settingsSummary(settings),
+                macField,
+                IsoLogUtils.messageSummary(message));
         String mac = computeMac(message, packager, settings, macField);
         putCanonicalMac(message, macField, mac);
+        log.info("ISO MAC sign result: resolvedMacField=DE{}, mac={}", macField, mac);
         return mac;
     }
 
@@ -102,15 +133,52 @@ public class IsoMacService {
     private String computeAnsiX919(IsoMessageDto message, ISOPackager packager, KeySettingsDto settings, String macField) throws Exception {
         IsoMessageDto copy = copyOf(message);
         putCanonicalMac(copy, macField, ZERO_ANSI_MAC);
-        byte[] data = isoCodec.pack(copy, packager);
+        log.info("ISO MAC compute input: algorithm={}, macField=DE{}, zeroMac={}, fields={}",
+                ANSI_X9_19,
+                macField,
+                ZERO_ANSI_MAC,
+                IsoLogUtils.fieldsSummary(copy.getFields()));
+        byte[] data;
+        try {
+            data = isoCodec.pack(copy, packager);
+        } catch (Exception e) {
+            log.warn("ISO MAC compute pack failed: algorithm={}, macField=DE{}, settings={}, fields={}",
+                    ANSI_X9_19,
+                    macField,
+                    settingsSummary(settings),
+                    IsoLogUtils.fieldsSummary(copy.getFields()),
+                    e);
+            throw e;
+        }
         byte[] key = HexUtils.fromHex(settings.getTskPlain());
-        return HexUtils.toHex(retailMac(data, key));
+        String mac = HexUtils.toHex(retailMac(data, key));
+        log.info("ISO MAC compute result: algorithm={}, macField=DE{}, packedBytes={}, tsk={}, resultMac={}",
+                ANSI_X9_19,
+                macField,
+                data.length,
+                IsoLogUtils.keyFingerprint(settings.getTskPlain()),
+                mac);
+        return mac;
     }
 
     private String computeSha256Field128Trim64(IsoMessageDto message, ISOPackager packager, KeySettingsDto settings) throws Exception {
         IsoMessageDto copy = copyOf(message);
         putCanonicalMac(copy, "128", ZERO_SHA256_FIELD128_MAC);
-        byte[] packedData = isoCodec.pack(copy, packager);
+        log.info("ISO MAC compute input: algorithm={}, macField=DE128, zeroMacLen={}, fields={}",
+                SHA256_FIELD128_TRIM64,
+                ZERO_SHA256_FIELD128_MAC.length(),
+                IsoLogUtils.fieldsSummary(copy.getFields()));
+        byte[] packedData;
+        try {
+            packedData = isoCodec.pack(copy, packager);
+        } catch (Exception e) {
+            log.warn("ISO MAC compute pack failed: algorithm={}, macField=DE128, settings={}, fields={}",
+                    SHA256_FIELD128_TRIM64,
+                    settingsSummary(settings),
+                    IsoLogUtils.fieldsSummary(copy.getFields()),
+                    e);
+            throw e;
+        }
         if (packedData.length < 64) {
             throw new IllegalStateException("SHA-256 Field128 MAC requires packed ISO length to be at least 64 bytes");
         }
@@ -118,7 +186,14 @@ public class IsoMacService {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         digest.update(HexUtils.fromHex(settings.getTskPlain()));
         digest.update(trimmedPackedData);
-        return HexUtils.toHex(digest.digest());
+        String mac = HexUtils.toHex(digest.digest());
+        log.info("ISO MAC compute result: algorithm={}, packedBytes={}, trimmedBytes={}, tsk={}, resultMac={}",
+                SHA256_FIELD128_TRIM64,
+                packedData.length,
+                trimmedPackedData.length,
+                IsoLogUtils.keyFingerprint(settings.getTskPlain()),
+                mac);
+        return mac;
     }
 
     private IsoMessageDto copyOf(IsoMessageDto source) {
@@ -226,6 +301,28 @@ public class IsoMacService {
 
     private boolean isSha256Field128Trim64(KeySettingsDto settings) {
         return settings != null && SHA256_FIELD128_TRIM64.equalsIgnoreCase(settings.getMacAlgorithm());
+    }
+
+    private String settingsSummary(KeySettingsDto settings) {
+        if (settings == null) {
+            return "<null>";
+        }
+        return "algorithm=" + settings.getMacAlgorithm()
+                + ", configuredMacField=DE" + settings.getMacField()
+                + ", tsk=" + IsoLogUtils.keyFingerprint(settings.getTskPlain());
+    }
+
+    private String macSkipReason(KeySettingsDto settings, IsoMessageDto message) {
+        if (settings == null) {
+            return "settings_missing";
+        }
+        if (isBlank(settings.getTskPlain())) {
+            return "tsk_blank";
+        }
+        if (isTidInitialization(message)) {
+            return "tid_initialization";
+        }
+        return "not_required";
     }
 
     private boolean isBlank(String value) {
