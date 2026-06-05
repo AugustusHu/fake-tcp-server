@@ -21,6 +21,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -36,6 +37,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TcpServerManager {
     private static final Logger log = LoggerFactory.getLogger(TcpServerManager.class);
+    private static final String LISTEN_HOST = "0.0.0.0";
 
     private final ChannelService channelService;
     private final PackagerFactory packagerFactory;
@@ -75,13 +77,10 @@ public class TcpServerManager {
 
     @PostConstruct
     public void start() {
-        for (ChannelProperties channel : channelService.enabledChannels()) {
-            ISOBasePackager packager = packagerFactory.create(channel.getIso8583().getPackager());
-            ChannelRuntime runtime = new ChannelRuntime(
-                    channel,
-                    packager,
-                    channelService.fieldValueTypes(packager));
-            acceptExecutor.submit(() -> acceptLoop(runtime));
+        List<ChannelProperties> channels = channelService.enabledChannels();
+        log.info("Starting {} enabled Fake TCP channel listener(s)", channels.size());
+        for (ChannelProperties channel : channels) {
+            acceptExecutor.submit(() -> startChannel(channel));
         }
     }
 
@@ -91,10 +90,23 @@ public class TcpServerManager {
         clientExecutor.shutdownNow();
     }
 
+    private void startChannel(ChannelProperties channel) {
+        try {
+            ISOBasePackager packager = packagerFactory.create(channel.getIso8583().getPackager());
+            ChannelRuntime runtime = new ChannelRuntime(
+                    channel,
+                    packager,
+                    channelService.fieldValueTypes(packager));
+            acceptLoop(runtime);
+        } catch (Exception e) {
+            log.error("TCP channel {} failed to initialize runtime", channel.getId(), e);
+        }
+    }
+
     private void acceptLoop(ChannelRuntime runtime) {
         ChannelProperties channel = runtime.getChannel();
         try (ServerSocket serverSocket = createServerSocket(channel)) {
-            log.info("Fake TCP channel {} listening on {}:{} tls={}", channel.getId(), channel.getTcp().getHost(), channel.getTcp().getPort(), channel.getTcp().isTlsEnabled());
+            log.info("Fake TCP channel {} listening on {}:{} tls={}", channel.getId(), LISTEN_HOST, channel.getTcp().getPort(), channel.getTcp().isTlsEnabled());
             while (!Thread.currentThread().isInterrupted()) {
                 Socket socket = serverSocket.accept();
                 socket.setSoTimeout(channel.getTcp().getReadTimeoutMs());
@@ -111,14 +123,14 @@ public class TcpServerManager {
         if (channel.getTcp().isTlsEnabled()) {
             return mockTlsServerSocketFactory.create(
                     properties.getMockTls(),
-                    channel.getTcp().getHost(),
+                    LISTEN_HOST,
                     channel.getTcp().getPort(),
                     50);
         }
         return new ServerSocket(
                 channel.getTcp().getPort(),
                 50,
-                InetAddress.getByName(channel.getTcp().getHost()));
+                InetAddress.getByName(LISTEN_HOST));
     }
 
     private void handleClient(ChannelRuntime runtime, Socket socket) {
